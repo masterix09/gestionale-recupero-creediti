@@ -1,19 +1,34 @@
 "use server"
 
-export default async function checkUser( email: string, password: string) {
-    if(email === "amministrazione@admin.it" && password === "admin1234" ) {
+import prisma from "@/lib/db"
 
-        const user = {
-            id: "1",
-            name: "Admin",
-            email: "amministrazione@admin.it",
-            role: "admin"
+export default async function checkUser( email: string, password: string) {
+    return await prisma.user.findFirst({
+        where: {
+            email, password
+        },
+        select: {
+            id: true,
+            email: true,
+            packageType: false,
+            password: false,
+            role: true
         }
-        return user
-    } else return {
-        id: "2",
-        name: "prova",
-        email: email,
-        role: "user"
-    }
+    })
+}
+
+export async function checkUserPackage( email: string) {
+    return await prisma.user.findFirst({
+        where: {
+            email
+        },
+        select: {
+            id: true,
+            email: true,
+            packageType: true,
+            password: false,
+            role: true
+        }
+    })
+    
 }

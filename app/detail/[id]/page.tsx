@@ -8,11 +8,13 @@ import { FaRegCalendar } from "@react-icons/all-files/fa/FaRegCalendar";
 import DetailBox from "@/components/detail/DetailBox";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { checkUserPackage } from "@/actions/getUserFromDB";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const sessions = await auth();
 
   if (sessions && sessions.user) {
+    const packageType = await checkUserPackage(sessions.user.email ?? "");
     return (
       <div className="w-[90%] md:w-[90%] mx-auto grid grid-cols-1 md:grid-cols-2 gap-5 ">
         <DetailBox
@@ -32,7 +34,7 @@ export default async function Page({ params }: { params: { id: string } }) {
           idUser={params.id}
         />
 
-        {sessions && sessions.user.role === "admin" && (
+        {packageType?.packageType === "gold" && (
           <DetailBox
             icon={<FaBuilding className="w-8 h-8 text-red-800" />}
             info={[{ title: "Partecipazioni", value: "1" }]}

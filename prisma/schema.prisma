@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("NEXT_PUBLIC_DATABASE_URL")
+}
+
+model User {
+  id          String @id @unique
+  email       String
+  password    String
+  role        String
+  packageType String
+}
+
+model Persona {
+  id                     String                 @id @unique
+  CF                     String                 @unique
+  PIVA                   String
+  nome                   String
+  cognome                String
+  sesso                  String
+  comune_nascita         String
+  provincia_nascita      String
+  data_nascita           String
+  data_morte             String
+  via                    String
+  cap                    String
+  comune                 String
+  provincia              String
+  idTelefono             Telefono[]
+  idDatore               Datore[]
+  idCessionePignoramento CessionePignoramento[]
+}
+
+model Datore {
+  CF                  String @id @unique
+  tipo                String
+  reddito             String
+  mese                String
+  tipologia_contratto String
+  inizio              String
+  fine                String
+  PIVA                String
+  ragione_sociale     String
+  nome                String
+  via                 String
+  cap                 String
+  comune              String
+  provincia           String
+
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
+}
+
+model Telefono {
+  id    String @id @unique
+  value String
+
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
+}
+
+model CessionePignoramento {
+  id                    String   @id @unique
+  cessione              String
+  scadenza_cessione     String
+  pignoramento          String
+  scadenza_pignoramento String
+  Persona               Persona? @relation(fields: [personaID], references: [id])
+  personaID             String?
+}
