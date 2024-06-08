@@ -23,7 +23,20 @@ export async function updateProcessFile(data: TData[]) {
 
     console.log(data)
 
+    
+
    data.forEach(async (item) => {
+
+    const newBirthDate = item.data_nascita.slice(1,item.data_nascita.length - 1);
+    console.log(newBirthDate);
+
+    const persona = await prisma.persona.findFirst({
+        where: {
+            CF: item.CF
+        },
+
+    })
+
     await prisma.persona.upsert({
         where: {
             CF: item.CF,
@@ -41,7 +54,7 @@ export async function updateProcessFile(data: TData[]) {
             provincia: item.provincia,
             provincia_nascita: item.provincia_nascita,
             sesso: item.sesso,
-            via: item.via,
+            via: persona ? persona?.via.concat(item.via) : item.via,
             CF: item.CF
         },
         update: {
@@ -56,7 +69,7 @@ export async function updateProcessFile(data: TData[]) {
             provincia: item.provincia,
             provincia_nascita: item.provincia_nascita,
             sesso: item.sesso,
-            via: item.via
+            via: persona?.via.concat(item.via)
         }
     })
    });
