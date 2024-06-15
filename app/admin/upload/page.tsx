@@ -1,5 +1,6 @@
 "use client";
 import {
+  addDataToDatore,
   updateProcessFile,
   updateProcessFileSCP,
   updateProcessFileTelefono,
@@ -11,6 +12,7 @@ export default function Page() {
   const [data, setData] = useState([]);
 
   const fileRefAnagrafica = useRef<HTMLInputElement | null>(null);
+  const fileRefAnagraficaLavoro = useRef<HTMLInputElement | null>(null);
   const fileRefTelefono = useRef<HTMLInputElement | null>(null);
   const fileRefSCP = useRef<HTMLInputElement | null>(null);
 
@@ -40,10 +42,88 @@ export default function Page() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log(parsedData);
+        // console.log(parsedData);
         //@ts-ignore
         setData(parsedData);
+        // console.log(parsedData);
+        const totalColumn = Object.keys(parsedData.at(0)!).length;
+        const totalColumnDatore = totalColumn - 14;
+        const counterRowDatore = totalColumnDatore / 16;
+
         const data = parsedData.map((item) => {
+          let arrDatore = [];
+
+          for (let index = 0; index < counterRowDatore; index++) {
+            if (index === 0) {
+              arrDatore.push({
+                // @ts-ignore
+                cfPersona: item[`CF`] as string,
+                // @ts-ignore
+                cfdatore: item[`CFDatoreDiLavoro`] as string,
+                // @ts-ignore
+                tipo: item[`Tipo`] as string,
+                // @ts-ignore
+                reddito: item[`Reddito`] as string,
+                // @ts-ignore
+                mese: item[`MESE`] as string,
+                // @ts-ignore
+                partTime: item[`PART FULL TIME`] as string,
+                // @ts-ignore
+                inizio: item[`Inizio`] as string,
+                // @ts-ignore
+                fine: item[`Fine`] as string,
+                // @ts-ignore
+                piva: item[`P.IVA_1`] as string,
+                // @ts-ignore
+                ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
+                // @ts-ignore
+                nome: item[`Nome_1`] as string,
+                // @ts-ignore
+                via: item[`Via_1`] as string,
+                // @ts-ignore
+                cap: item[`Cap_1`] as string,
+                // @ts-ignore
+                comune: item[`Comune_1`] as string,
+                // @ts-ignore
+                provincia: item[`Provincia_1`] as string,
+              });
+            } else {
+              arrDatore.push({
+                // @ts-ignore
+                cfPersona: item[`CF`] as string,
+                // @ts-ignore
+                cfdatore: item[`CFDatoreDiLavoro_${index + 1}`] as string,
+                // @ts-ignore
+                tipo: item[`Tipo_${index}`] as string,
+                // @ts-ignore
+                reddito: item[`Reddito_${index}`] as string,
+                // @ts-ignore
+                mese: item[`MESE_${index}`] as string,
+                // @ts-ignore
+                partTime: item[`PART FULL TIME_${index}`] as string,
+                // @ts-ignore
+                inizio: item[`Inizio_${index}`] as string,
+                // @ts-ignore
+                fine: item[`Fine_${index}`] as string,
+                // @ts-ignore
+                piva: item[`P.IVA_${index + 1}`] as string,
+                // @ts-ignore
+                ragioneSociale: item[
+                  `CognomeRagioneSociale_${index + 1}`
+                ] as string,
+                // @ts-ignore
+                nome: item[`Nome_${index + 1}`] as string,
+                // @ts-ignore
+                via: item[`Via_${index + 1}`] as string,
+                // @ts-ignore
+                cap: item[`Cap_${index + 1}`] as string,
+                // @ts-ignore
+                comune: item[`Comune_${index + 1}`] as string,
+                // @ts-ignore
+                provincia: item[`Provincia_${index + 1}`] as string,
+              });
+            }
+          }
           return {
             // @ts-ignore
             CF: item[`CF`] as string,
@@ -71,9 +151,151 @@ export default function Page() {
             comune: item[`Comune`] as string,
             // @ts-ignore
             provincia: item[`Provincia`] as string,
+            datore: arrDatore,
           };
         });
+        console.log(data);
         await updateProcessFile(data);
+        // await addDataToDatore(data);
+      };
+    }
+  };
+
+  const handleFileAnagraficaLavoro = (e) => {
+    console.log(e);
+    const file = e.target.files[0];
+    console.log(file);
+
+    if (!file) return;
+
+    if (isExcelFile(file) && file.size !== 0) {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = async (e) => {
+        const data1 = e.target.result;
+        const workbook = XLSX.read(data1, { type: "binary" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        //@ts-ignore
+        setData(parsedData);
+        const totalColumn = Object.keys(parsedData.at(0)!).length;
+        const totalColumnDatore = totalColumn - 14;
+        const counterRowDatore = totalColumnDatore / 16;
+
+        const data = parsedData.map((item) => {
+          let arrDatore = [];
+
+          for (let index = 0; index < counterRowDatore; index++) {
+            if (index === 0) {
+              if ((item[`CFDatoreDiLavoro`] as string) === "") {
+                index = 3;
+              } else {
+                arrDatore.push({
+                  // @ts-ignore
+                  cfPersona: item[`CF`] as string,
+                  // @ts-ignore
+                  cfdatore: item[`CFDatoreDiLavoro`] as string,
+                  // @ts-ignore
+                  tipo: item[`Tipo`] as string,
+                  // @ts-ignore
+                  reddito: item[`Reddito`] as string,
+                  // @ts-ignore
+                  mese: item[`MESE`] as string,
+                  // @ts-ignore
+                  partTime: item[`PART FULL TIME`] as string,
+                  // @ts-ignore
+                  inizio: item[`Inizio`] as string,
+                  // @ts-ignore
+                  fine: item[`Fine`] as string,
+                  // @ts-ignore
+                  piva: item[`P.IVA_1`] as string,
+                  // @ts-ignore
+                  ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
+                  // @ts-ignore
+                  nome: item[`Nome_1`] as string,
+                  // @ts-ignore
+                  via: item[`Via_1`] as string,
+                  // @ts-ignore
+                  cap: item[`Cap_1`] as string,
+                  // @ts-ignore
+                  comune: item[`Comune_1`] as string,
+                  // @ts-ignore
+                  provincia: item[`Provincia_1`] as string,
+                });
+              }
+            } else {
+              if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
+                index = 3;
+              } else {
+                arrDatore.push({
+                  // @ts-ignore
+                  cfPersona: item[`CF`] as string,
+                  // @ts-ignore
+                  cfdatore: item[`CFDatoreDiLavoro_${index}`] as string,
+                  // @ts-ignore
+                  tipo: item[`Tipo_${index}`] as string,
+                  // @ts-ignore
+                  reddito: item[`Reddito_${index}`] as string,
+                  // @ts-ignore
+                  mese: item[`MESE_${index}`] as string,
+                  // @ts-ignore
+                  partTime: item[`PART FULL TIME_${index}`] as string,
+                  // @ts-ignore
+                  inizio: item[`Inizio_${index}`] as string,
+                  // @ts-ignore
+                  fine: item[`Fine_${index}`] as string,
+                  // @ts-ignore
+                  piva: item[`P.IVA_${index + 1}`] as string,
+                  // @ts-ignore
+                  ragioneSociale: item[
+                    `CognomeRagioneSociale_${index + 1}`
+                  ] as string,
+                  // @ts-ignore
+                  nome: item[`Nome_${index + 1}`] as string,
+                  // @ts-ignore
+                  via: item[`Via_${index + 1}`] as string,
+                  // @ts-ignore
+                  cap: item[`Cap_${index + 1}`] as string,
+                  // @ts-ignore
+                  comune: item[`Comune_${index + 1}`] as string,
+                  // @ts-ignore
+                  provincia: item[`Provincia_${index + 1}`] as string,
+                });
+              }
+            }
+          }
+          return {
+            // @ts-ignore
+            CF: item[`CF`] as string,
+            // @ts-ignore
+            PIVA: item[`P.IVA`] as string,
+            // @ts-ignore
+            nome: item[`Nome`] as string,
+            // @ts-ignore
+            cognome: item[`CognomeRagioneSociale`] as string,
+            // @ts-ignore
+            sesso: item[`Sesso`] as string,
+            // @ts-ignore
+            comune_nascita: item[`ComuneNasc'a`] as string,
+            // @ts-ignore
+            provincia_nascita: item[`ProvNasc'a`] as string,
+            // @ts-ignore
+            data_nascita: item[`DataNasc'a`] as string,
+            // @ts-ignore
+            data_morte: item[`DataMorte`] as string,
+            // @ts-ignore
+            via: item[`Via`] as string,
+            // @ts-ignore
+            cap: item[`Cap`] as string,
+            // @ts-ignore
+            comune: item[`Comune`] as string,
+            // @ts-ignore
+            provincia: item[`Provincia`] as string,
+            datore: arrDatore,
+          };
+        });
+        await addDataToDatore(data);
       };
     }
   };
@@ -163,9 +385,7 @@ export default function Page() {
   return (
     <div className="h-full w-full flex flex-col gap-y-8">
       <div>
-        <h3 className="text-white text-xl font-semibold">
-          Upload Anagrafica - Lavoro
-        </h3>
+        <h3 className="text-white text-xl font-semibold">Upload Anagrafica</h3>
         <input
           type="file"
           name="fileAnagrafica"
@@ -173,6 +393,18 @@ export default function Page() {
           accept=".xlsx, .xls"
           onChange={handleFileAnagrafica}
           ref={fileRefAnagrafica}
+          className="text-white"
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
+        <input
+          type="file"
+          name="fileAnagrafica"
+          id="fileAnagrafica"
+          accept=".xlsx, .xls"
+          onChange={handleFileAnagraficaLavoro}
+          ref={fileRefAnagraficaLavoro}
           className="text-white"
         />
       </div>

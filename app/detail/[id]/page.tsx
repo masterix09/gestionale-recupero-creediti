@@ -2,7 +2,7 @@ import { FaAddressCard } from "@react-icons/all-files/fa/FaAddressCard";
 import { FaBuilding } from "@react-icons/all-files/fa/FaBuilding";
 import { MdWork } from "@react-icons/all-files/md/MdWork";
 import { AiOutlineTeam } from "@react-icons/all-files/ai/AiOutlineTeam";
-import { RiGovernmentFill } from "@react-icons/all-files/ri/RiGovernmentFill";
+import { FaPhone } from "@react-icons/all-files/fa/FaPhone";
 import DetailBox from "@/components/detail/DetailBox";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -21,29 +21,43 @@ export default async function Page({ params }: { params: { id: string } }) {
           idUser={params.id}
         />
 
+        {packageType?.packageType === "premium" && (
+          <DetailBox
+            icon={<MdWork className="w-8 h-8 text-red-800" />}
+            title="Lavoro"
+            idUser={params.id}
+          />
+        )}
         {packageType?.packageType === "gold" && (
           <DetailBox
-            icon={<FaBuilding className="w-8 h-8 text-red-800" />}
-            title="Proprietà"
+            icon={<MdWork className="w-8 h-8 text-red-800" />}
+            title="Lavoro"
             idUser={params.id}
           />
         )}
 
-        <DetailBox
-          icon={<MdWork className="w-8 h-8 text-red-800" />}
-          title="Lavoro"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
-          title="Ultime SCP"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<RiGovernmentFill className="w-8 h-8 text-red-800" />}
-          title="F"
-          idUser={params.id}
-        />
+        {packageType?.packageType === "premium" && (
+          <DetailBox
+            icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
+            title="Ultime SCP"
+            idUser={params.id}
+          />
+        )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
+            title="Ultime SCP"
+            idUser={params.id}
+          />
+        )}
+
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<FaPhone className="w-8 h-8 text-red-800" />}
+            title="Telefono"
+            idUser={params.id}
+          />
+        )}
       </div>
     );
   } else {

@@ -2,10 +2,8 @@ generator client {
   provider = "prisma-client-js"
 }
 
-
-
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("NEXT_PUBLIC_DATABASE_URL")
 }
 
@@ -29,16 +27,17 @@ model Persona {
   data_nascita           String
   data_morte             String
   via                    String[]
-  cap                    String
-  comune                 String
-  provincia              String
+  cap                    String[]
+  comune                 String[]
+  provincia              String[]
   idTelefono             Telefono[]
   idDatore               Datore[]
   idCessionePignoramento CessionePignoramento[]
 }
 
 model Datore {
-  CF                  String @id @unique
+  id                  String @id @unique
+  CF                  String
   tipo                String
   reddito             String
   mese                String

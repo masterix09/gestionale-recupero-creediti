@@ -17,18 +17,63 @@ type TData = {
   cap: string;
   comune: string;
   provincia: string;
+  datore: {
+    cfPersona: string;
+    cfdatore: string;
+    tipo: string,
+    reddito: string;
+    mese: string;
+    partTime: string;
+    inizio: string;
+    fine: string;
+    piva: string;
+    ragioneSociale: string;
+    nome: string;
+    via: string;
+    cap: string;
+    comune: string;
+    provincia: string
+  }[]
 };
+
+
+export async function addDataToDatore(data: TData[]) {
+    data.forEach(persona => {
+        persona.datore.forEach(async datore => {
+            const { cap, comune, fine, inizio, mese, nome, partTime, piva, provincia, ragioneSociale,reddito, tipo, via, cfPersona, cfdatore} = datore;
+            console.log("cfPersona => ", cfPersona)
+            await prisma.datore.create({
+                data: {
+                    id: uuid().toString(),
+                    cap,
+                    CF: cfdatore ?? "",
+                    comune,
+                    fine,
+                    inizio,
+                    mese: mese?.toString() ?? "",
+                    nome,
+                    PIVA: piva,
+                    provincia,
+                    ragione_sociale: ragioneSociale,
+                    reddito: reddito?.toString() ?? "",
+                    tipo,
+                    tipologia_contratto: partTime,
+                    via,
+                    personaID: cfPersona ?? "",
+                }
+            })
+        })
+       })
+}
 
 export async function updateProcessFile(data: TData[]) {
 
-    console.log(data)
-
     
-
+    
    data.forEach(async (item) => {
 
-    const newBirthDate = item.data_nascita.slice(1,item.data_nascita.length - 1);
-    console.log(newBirthDate);
+    const newBirthDate = item.data_nascita.slice(1, item.data_nascita.length -1);
+    console.log(newBirthDate)
 
     const persona = await prisma.persona.findFirst({
         where: {
@@ -42,37 +87,39 @@ export async function updateProcessFile(data: TData[]) {
             CF: item.CF,
         },
         create: {
-            id: uuid().toString(),
-            cap: item.cap,
+            id: item.CF,
+            cap: [item.cap.toString()],
             cognome: item.cognome,
-            comune: item.comune,
+            comune:  [item.comune],
             comune_nascita: item.comune_nascita,
             data_morte: item.data_morte,
-            data_nascita: item.data_nascita,
+            data_nascita: newBirthDate.toString(),
             nome: item.nome,
             PIVA: item.PIVA,
-            provincia: item.provincia,
+            provincia: [item.provincia],
             provincia_nascita: item.provincia_nascita,
             sesso: item.sesso,
-            via: persona ? persona?.via.concat(item.via) : item.via,
+            via: [item.via],
             CF: item.CF
         },
         update: {
-            cap: item.cap,
+            cap: persona?.cap.at(persona.cap.length -1) !== item.cap.toString() ? persona?.cap.concat(item.cap.toString()) : [...persona.cap],
             cognome: item.cognome,
-            comune: item.comune,
+            comune: persona?.comune.at(persona.comune.length -1) !== item.comune.toString() ? persona?.comune.concat(item.comune.toString()) : [...persona.comune],
             comune_nascita: item.comune_nascita,
             data_morte: item.data_morte,
             data_nascita: item.data_nascita,
             nome: item.nome,
             PIVA: item.PIVA,
-            provincia: item.provincia,
+            provincia: persona?.provincia.at(persona.provincia.length -1) !== item.provincia.toString() ? persona?.provincia.concat(item.provincia.toString()) : [...persona.provincia],
             provincia_nascita: item.provincia_nascita,
             sesso: item.sesso,
-            via: persona?.via.concat(item.via)
+            via: persona?.via.at(persona.via.length -1) !== item.via.toString() ? persona?.via.concat(item.via.toString()) : [...persona.via],
         }
     })
    });
+
+//    addDataToDatore(data)
     
 }
 
@@ -93,18 +140,20 @@ export async function updateProcessFileTelefono (data: {CF: string; Tel: string[
         })
 
         console.log(idPersona)
-        item.Tel.map(async element => {
+        item.Tel.map(async (element, idx) => {
             element !== "" && await prisma.telefono.upsert({
                 where: {
-                    id: `${item.CF}${element}`,
+                    id: `${item.CF}${idx}`,
                 },
                 create: {
-                    id: `${item.CF}${element}`,
+                    id: `${item.CF}${idx}`,
                     value: element.toString(),
                     personaID: idPersona?.id ?? ""
                 },
                 update: {
-
+                    id: `${item.CF}${idx}`,
+                    value: element.toString(),
+                    personaID: idPersona?.id ?? ""
                 }
             })
         })

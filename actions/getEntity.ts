@@ -20,7 +20,5 @@ export async function useGetEntity(prevState: any, formData: FormData) {
         
     }
    })
-
-   console.log(data)
    return data
 }
