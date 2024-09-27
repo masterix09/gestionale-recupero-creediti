@@ -17,7 +17,6 @@ export async function useGetEntity(prevState: any, formData: FormData) {
         cognome: true,
         CF: true,
         PIVA: true,
-        
     }
    })
    return data

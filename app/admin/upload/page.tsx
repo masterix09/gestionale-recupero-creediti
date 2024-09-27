@@ -2,19 +2,26 @@
 import {
   addDataToDatore,
   updateProcessFile,
+  updateProcessFileABICAB,
   updateProcessFileSCP,
   updateProcessFileTelefono,
+  uploadCCFile,
 } from "@/actions/actionsUpdateFromFile";
+import { useToast } from "@/components/ui/use-toast";
 import { useRef, useState } from "react";
 import XLSX from "xlsx";
 
 export default function Page() {
   const [data, setData] = useState([]);
 
+  const { toast } = useToast();
+
   const fileRefAnagrafica = useRef<HTMLInputElement | null>(null);
   const fileRefAnagraficaLavoro = useRef<HTMLInputElement | null>(null);
   const fileRefTelefono = useRef<HTMLInputElement | null>(null);
   const fileRefSCP = useRef<HTMLInputElement | null>(null);
+  const fileReCC = useRef<HTMLInputElement | null>(null);
+  const fileRefABICAB = useRef<HTMLInputElement | null>(null);
 
   const isExcelFile = (file: { name: any }) => {
     const allowedExtensions = [".xlsx", ".xls"];
@@ -155,7 +162,22 @@ export default function Page() {
           };
         });
         console.log(data);
-        await updateProcessFile(data);
+
+        const res = await updateProcessFile(data);
+
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
+
         // await addDataToDatore(data);
       };
     }
@@ -295,7 +317,22 @@ export default function Page() {
             datore: arrDatore,
           };
         });
-        await addDataToDatore(data);
+
+        console.log("data => ", data);
+        const res = await addDataToDatore(data);
+
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
       };
     }
   };
@@ -339,7 +376,20 @@ export default function Page() {
         //@ts-ignore
         setData(transformedArray);
 
-        await updateProcessFileTelefono(transformedArray);
+        const res = await updateProcessFileTelefono(transformedArray);
+
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
       };
     }
   };
@@ -377,7 +427,128 @@ export default function Page() {
             SP: item[`SP`] as string,
           };
         });
-        await updateProcessFileSCP(data);
+        const res = await updateProcessFileSCP(data);
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
+      };
+    }
+  };
+
+  const handleFileABICAB = (e) => {
+    console.log(e);
+    const file = e.target.files[0];
+    console.log(file);
+
+    if (!file) return;
+
+    if (isExcelFile(file) && file.size !== 0) {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = async (e) => {
+        const data1 = e.target.result;
+        const workbook = XLSX.read(data1, { type: "binary" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        console.log("parsed => ", parsedData);
+        //@ts-ignore
+        setData(parsedData);
+        const data = parsedData.map((item) => {
+          return {
+            // @ts-ignore
+            CF: item[`Codice Fiscale`] as string,
+            // @ts-ignore
+            ABI: item[`ABI`] as string,
+            // @ts-ignore
+            CAB: item[`CAB`] as string,
+            // @ts-ignore
+            Anno: item[`Anno`] as string,
+            // @ts-ignore
+            ABI1: item[`ABI_1`] as string,
+            // @ts-ignore
+            CAB1: item[`CAB_1`] as string,
+            // @ts-ignore
+            Anno1: item[`Anno_1`] as string,
+            // @ts-ignore
+            ABI2: item[`ABI_2`] as string,
+            // @ts-ignore
+            CAB2: item[`CAB_2`] as string,
+            // @ts-ignore
+            Anno2: item[`Anno_2`] as string,
+          };
+        });
+
+        const res = await updateProcessFileABICAB(data);
+
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
+      };
+    }
+  };
+
+  const handleFileCC = (e) => {
+    console.log(e);
+    const file = e.target.files[0];
+    console.log(file);
+
+    if (!file) return;
+
+    if (isExcelFile(file) && file.size !== 0) {
+      const reader = new FileReader();
+      reader.readAsArrayBuffer(file);
+      reader.onload = async (e) => {
+        const data1 = e.target.result;
+        const workbook = XLSX.read(data1, { type: "binary" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        console.log("parsed => ", parsedData);
+        //@ts-ignore
+        setData(parsedData);
+        const data = parsedData.map((item) => {
+          return {
+            // @ts-ignore
+            banca: item[`BANCA`] as string,
+            // @ts-ignore
+            CF: item[`CF`] as string,
+            // @ts-ignore
+            nome: item[`NOME`] as string,
+          };
+        });
+
+        const res = await uploadCCFile(data);
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops ! Errore!",
+            description: "Errore operazione. Riprova!",
+          });
+        }
       };
     }
   };
@@ -430,6 +601,30 @@ export default function Page() {
           accept=".xlsx, .xls"
           onChange={handleFileSCP}
           ref={fileRefSCP}
+          className="text-white"
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-xl font-semibold">Upload ABI CAB</h3>
+        <input
+          type="file"
+          name="fileABICAB"
+          id="fileABICAB"
+          accept=".xlsx, .xls"
+          onChange={handleFileABICAB}
+          ref={fileRefABICAB}
+          className="text-white"
+        />
+      </div>
+      <div>
+        <h3 className="text-white text-xl font-semibold">Upload CC</h3>
+        <input
+          type="file"
+          name="fileCC"
+          id="fileCC"
+          accept=".xlsx, .xls"
+          onChange={handleFileCC}
+          ref={fileReCC}
           className="text-white"
         />
       </div>

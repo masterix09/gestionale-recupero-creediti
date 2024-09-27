@@ -23,6 +23,7 @@ const formSchema = z.object({
   packageType: z.enum(["basic", "premium", "gold"], {
     required_error: "Seleziona una tipologia di pacchetto",
   }),
+  token: z.number().min(10, "Minimo di token assegnabili 10"),
 });
 
 export default function Page() {
@@ -33,6 +34,7 @@ export default function Page() {
       email: "",
       packageType: "basic",
       password: "",
+      token: 10,
     },
   });
 
@@ -139,6 +141,25 @@ export default function Page() {
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="token"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-white">Token</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="100"
+                      type="number"
+                      min={10}
+                      {...field}
+                      onChange={(event) => field.onChange(+event.target.value)}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-500" />
                 </FormItem>
               )}
             />

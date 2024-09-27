@@ -35,14 +35,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       },
     }),
   ],
+  // callbacks: {
+  //   jwt({ token, user }) {
+  //     if(user) token.role = user.email === "amministrazione@admin.it" ? "admin" : "user"
+  //     return token
+  //   },
+  //   session({ session, token }) {
+  //     session.user.role = token.email === "amministrazione@admin.it" ? "admin" : "user"
+  //     return session
+  //   }
+  // }
   callbacks: {
     jwt({ token, user }) {
-      if(user) token.role = user.email === "amministrazione@admin.it" ? "admin" : "user"
+      if (user) { // User is available during sign-in
+        token.id = user.id
+      }
       return token
     },
     session({ session, token }) {
-      session.user.role = token.email === "amministrazione@admin.it" ? "admin" : "user"
+      //@ts-ignore
+      session.user.id = token.id
       return session
-    }
-  }
+    },
+  },
 })

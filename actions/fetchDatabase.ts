@@ -1,6 +1,113 @@
 "use server"
 
+import { auth } from "@/lib/auth";
+import { AnagraficaPlafond, LavororPlafond, SCPPlafond, TelefonoPlafond } from "@/lib/constants"
 import prisma from "@/lib/db"
+import { revalidatePath } from "next/cache";
+
+
+
+const decreaseToken = async (id: string, plafond: number) => {
+    console.log(id)
+    console.log("ci son");
+    
+    const res =  await prisma.user.update({
+        where: {
+            id,
+        },
+        data: {
+            token: {
+                decrement: plafond
+            }
+        }
+    })
+    console.log(res)
+}
+
+export const addToken = async (data: {email: string; plafond: number}) => {
+
+    try {
+        const id = await prisma.user.findFirst({
+            where: {
+                email: data.email
+            },select: {
+                id: true
+            }
+        })
+            
+        await prisma.user.update({
+            where: {
+                id: id?.id,
+            },
+            data: {
+                token: {
+                    increment: data.plafond
+                }
+            }
+        })
+        return "OK"
+    } catch (error) {
+        console.log(error);
+        return "NO"
+    }
+
+    
+    
+}
+
+export const availableToken = async (category: string) => {
+    
+    const sessions = await auth();
+
+    if(sessions?.user.role !== "admin") {
+        const token = await prisma.user.findFirst({
+            where: {
+                id: sessions?.user.id ?? ""
+            },
+            select: {
+                token: true,
+                id: true
+            }
+        })
+    
+        
+    
+        if(category === "anagrafica") {
+            if( (token?.token ?? 0) > AnagraficaPlafond) {
+                decreaseToken(token?.id ?? "", AnagraficaPlafond)
+                return "OK"
+            } else return "NO"
+        }
+        
+        if(category === "lavoro") {
+            if( (token?.token ?? 0) > LavororPlafond) {
+                decreaseToken(token?.id ?? "", LavororPlafond)
+                return "OK"
+            } else return "NO"
+        }
+        
+        if(category === "telefono") {
+            if( (token?.token ?? 0) > TelefonoPlafond) {
+                decreaseToken(token?.id ?? "", TelefonoPlafond)
+                return "OK"
+            } else return "NO"
+        }
+        
+        if(category === "scp") {
+            if( (token?.token ?? 0) > SCPPlafond) {
+                decreaseToken(token?.id ?? "", SCPPlafond)
+                return "OK"
+            } else return "NO"
+        }
+    
+        revalidatePath(`/category/${category}/[id]`, "page")
+    }
+    
+    
+}
+
+
+
 
 export const getAnagrafica = async (id: string) => {
 
@@ -35,5 +142,27 @@ export const getTelefono = async (id: string) => {
         where: {
             personaID: id
         },
+    })
+}
+
+
+export const getABICAB = async (id: string) => {
+
+    return await prisma.abiCab.findMany({
+        where: {
+            id: id
+        },
+    })
+}
+
+
+export const getTokenById = async (id: string) => {
+    return await prisma.user.findFirst({
+        where: {
+            id
+        },
+        select: {
+            token: true
+        }
     })
 }

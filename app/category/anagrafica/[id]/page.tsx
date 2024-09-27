@@ -1,4 +1,4 @@
-import { getAnagrafica } from "@/actions/fetchDatabase";
+import { availableToken, getAnagrafica } from "@/actions/fetchDatabase";
 import {
   Table,
   TableBody,
@@ -14,8 +14,11 @@ import { redirect } from "next/navigation";
 export default async function Page({ params }: { params: { id: string } }) {
   const sessions = await auth();
   if (sessions && sessions.user) {
+    const token = await availableToken("anagrafica");
+    if (token && token === "NO") {
+      redirect("/");
+    }
     const data = await getAnagrafica(params.id);
-    console.log(data);
     return (
       <div className="w-[90%] md:w-[80%] mx-auto min-h-screen">
         <h3 className="text-white uppercase font-bold text-2xl mb-5">

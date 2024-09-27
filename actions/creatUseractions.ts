@@ -4,9 +4,9 @@ import prisma from "@/lib/db";
 import { v4 } from 'uuid';
 
 
-export async function createUser(data: {email: string; password: string; packageType: string}) {
+export async function createUser(data: {email: string; password: string; packageType: string; token: number}) {
 
-    const {email, packageType, password} = data
+    const {email, packageType, password, token} = data
 
     try {
 
@@ -16,7 +16,8 @@ export async function createUser(data: {email: string; password: string; package
                 email,
                 packageType,
                 password,
-                role: "user"
+                role: "user",
+                token,
             }
         })
 
