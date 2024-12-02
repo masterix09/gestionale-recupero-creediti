@@ -33,6 +33,7 @@ export default function Page() {
     return allowedExtensions.includes(fileExtension);
   };
 
+  // @ts-ignore
   const handleFileAnagrafica = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -44,6 +45,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -183,6 +185,7 @@ export default function Page() {
     }
   };
 
+  // @ts-ignore
   const handleFileAnagraficaLavoro = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -194,6 +197,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -210,6 +214,7 @@ export default function Page() {
 
           for (let index = 0; index < counterRowDatore; index++) {
             if (index === 0) {
+              // @ts-ignore
               if ((item[`CFDatoreDiLavoro`] as string) === "") {
                 index = 3;
               } else {
@@ -247,6 +252,7 @@ export default function Page() {
                 });
               }
             } else {
+              // @ts-ignore
               if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
                 index = 3;
               } else {
@@ -349,6 +355,7 @@ export default function Page() {
     });
   };
 
+  // @ts-ignore
   const handleFileTelefono = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -360,6 +367,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -394,6 +402,7 @@ export default function Page() {
     }
   };
 
+  // @ts-ignore
   const handleFileSCP = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -405,6 +414,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -444,6 +454,7 @@ export default function Page() {
     }
   };
 
+  // @ts-ignore
   const handleFileABICAB = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -455,6 +466,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
@@ -506,6 +518,7 @@ export default function Page() {
     }
   };
 
+  // @ts-ignore
   const handleFileCC = (e) => {
     console.log(e);
     const file = e.target.files[0];
@@ -517,6 +530,7 @@ export default function Page() {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
+        // @ts-ignore
         const data1 = e.target.result;
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];

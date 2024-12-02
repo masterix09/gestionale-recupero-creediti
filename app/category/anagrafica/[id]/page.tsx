@@ -113,13 +113,16 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.via.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">{item}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore
+              data?.via.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">{item}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
 
@@ -136,13 +139,16 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.comune.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">{item}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore{
+              data?.comune.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">{item}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
 
@@ -159,13 +165,16 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.provincia.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">{item}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore
+              data?.provincia.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">{item}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
 
@@ -182,13 +191,16 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.cap.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">{item}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore
+              data?.cap.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">{item}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
       </div>

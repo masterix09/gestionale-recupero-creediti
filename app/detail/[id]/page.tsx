@@ -65,6 +65,13 @@ export default async function Page({ params }: { params: { id: string } }) {
             idUser={params.id}
           />
         )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<FaPhone className="w-8 h-8 text-red-800" />}
+            title="cc"
+            idUser={params.id}
+          />
+        )}
       </div>
     );
   } else {

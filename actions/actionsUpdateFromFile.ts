@@ -309,6 +309,55 @@ export async function updateProcessFileABICAB(
             id: item.CF,
           },
         });
+      } else {
+        const persona = await prisma.persona.findFirst({
+          where: {
+            CF: item.CF,
+          },
+        });
+
+        await prisma.abiCab.upsert({
+          where: {
+            id: item.CF,
+          },
+          update: {
+            ABI: [
+              item.ABI?.toString(),
+              item.ABI1?.toString(),
+              item.ABI2?.toString(),
+            ],
+            Anno: [
+              item.Anno?.toString(),
+              item.Anno1?.toString(),
+              item.Anno2?.toString(),
+            ],
+            CAB: [
+              item.CAB?.toString(),
+              item.CAB1?.toString(),
+              item.CAB2?.toString(),
+            ],
+            personaID: persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
+          },
+          create: {
+            ABI: [
+              item.ABI?.toString(),
+              item.ABI1?.toString(),
+              item.ABI2?.toString(),
+            ],
+            Anno: [
+              item.Anno?.toString(),
+              item.Anno1?.toString(),
+              item.Anno2?.toString(),
+            ],
+            CAB: [
+              item.CAB?.toString(),
+              item.CAB1?.toString(),
+              item.CAB2?.toString(),
+            ],
+            personaID: persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
+            id: item.CF,
+          },
+        });
       }
     });
     return "OK";

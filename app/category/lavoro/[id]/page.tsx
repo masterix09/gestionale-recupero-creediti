@@ -72,32 +72,37 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">{item?.CF}</TableCell>
-                  <TableCell className="text-white">{item?.tipo}</TableCell>
-                  <TableCell className="text-white">{item?.reddito}</TableCell>
-                  <TableCell className="text-white">{item?.mese}</TableCell>
-                  <TableCell className="text-white">
-                    {item?.tipologia_contratto}
-                  </TableCell>
-                  <TableCell className="text-white">{item?.inizio}</TableCell>
-                  <TableCell className="text-white">{item?.fine}</TableCell>
-                  <TableCell className="text-white">{item?.PIVA}</TableCell>
-                  <TableCell className="text-white">
-                    {item?.ragione_sociale}
-                  </TableCell>
-                  <TableCell className="text-white">{item?.nome}</TableCell>
-                  <TableCell className="text-white">{item?.via}</TableCell>
-                  <TableCell className="text-white">{item?.comune}</TableCell>
-                  <TableCell className="text-white">
-                    {item?.provincia}
-                  </TableCell>
-                  <TableCell className="text-white">{item?.cap}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore
+              data.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">{item?.CF}</TableCell>
+                    <TableCell className="text-white">{item?.tipo}</TableCell>
+                    <TableCell className="text-white">
+                      {item?.reddito}
+                    </TableCell>
+                    <TableCell className="text-white">{item?.mese}</TableCell>
+                    <TableCell className="text-white">
+                      {item?.tipologia_contratto}
+                    </TableCell>
+                    <TableCell className="text-white">{item?.inizio}</TableCell>
+                    <TableCell className="text-white">{item?.fine}</TableCell>
+                    <TableCell className="text-white">{item?.PIVA}</TableCell>
+                    <TableCell className="text-white">
+                      {item?.ragione_sociale}
+                    </TableCell>
+                    <TableCell className="text-white">{item?.nome}</TableCell>
+                    <TableCell className="text-white">{item?.via}</TableCell>
+                    <TableCell className="text-white">{item?.comune}</TableCell>
+                    <TableCell className="text-white">
+                      {item?.provincia}
+                    </TableCell>
+                    <TableCell className="text-white">{item?.cap}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
       </div>

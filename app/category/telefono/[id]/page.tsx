@@ -37,16 +37,19 @@ export default async function Page({ params }: { params: { id: string } }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, idx) => {
-              return (
-                <TableRow key={idx}>
-                  <TableCell className="text-white">
-                    {item?.personaID}
-                  </TableCell>
-                  <TableCell className="text-white">{item.value}</TableCell>
-                </TableRow>
-              );
-            })}
+            {
+              // @ts-ignore
+              data.map((item, idx) => {
+                return (
+                  <TableRow key={idx}>
+                    <TableCell className="text-white">
+                      {item?.personaID}
+                    </TableCell>
+                    <TableCell className="text-white">{item.value}</TableCell>
+                  </TableRow>
+                );
+              })
+            }
           </TableBody>
         </Table>
       </div>

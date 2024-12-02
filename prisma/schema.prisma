@@ -34,6 +34,7 @@ model Persona {
   idTelefono             Telefono[]
   idDatore               Datore[]
   idCessionePignoramento CessionePignoramento[]
+  AbiCab                 AbiCab[]
 }
 
 model Datore {
@@ -77,12 +78,14 @@ model CessionePignoramento {
 }
 
 model AbiCab {
-  id       String   @id @unique
-  ABI      String[]
-  CAB      String[]
-  Anno     String[]
-  Datore   Datore?  @relation(fields: [datoreID], references: [id])
-  datoreID String?
+  id        String   @id @unique
+  ABI       String[]
+  CAB       String[]
+  Anno      String[]
+  Datore    Datore?  @relation(fields: [datoreID], references: [id])
+  datoreID  String?
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
 }
 
 model ContoCorrente {
