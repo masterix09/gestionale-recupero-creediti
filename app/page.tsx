@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 export default async function Home() {
   const sessions = await auth();
 
+  // console.log("sessions ===> ", sessions);
+
   if (sessions && sessions.user) {
     return (
       <div className="w-full lg:w-[80%] mx-auto h-full px-3">

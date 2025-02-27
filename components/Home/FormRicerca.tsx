@@ -7,7 +7,15 @@ import { useGetEntity } from "@/actions/getEntity";
 import { useFormState } from "react-dom";
 
 const FormRicerca = () => {
-  const [state, formAction] = useFormState(useGetEntity, undefined);
+  const [state, formAction] = useFormState(useGetEntity, [
+    {
+      id: "string",
+      CF: "string",
+      PIVA: "string",
+      nome: "string",
+      cognome: "string",
+    },
+  ]);
   return (
     <div className="mt-10">
       <div className="w-full lg:w-[60%] mx-auto bg-slate-200 rounded-xl p-3 mb-10">

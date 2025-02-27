@@ -1,76 +1,77 @@
 import { FaAddressCard } from "@react-icons/all-files/fa/FaAddressCard";
 import { FaBuilding } from "@react-icons/all-files/fa/FaBuilding";
-import { HiLocationMarker } from "@react-icons/all-files/hi/HiLocationMarker";
+import { MdWork } from "@react-icons/all-files/md/MdWork";
 import { AiOutlineTeam } from "@react-icons/all-files/ai/AiOutlineTeam";
-import { RiGovernmentFill } from "@react-icons/all-files/ri/RiGovernmentFill";
-import { MdThumbDown } from "@react-icons/all-files/md/MdThumbDown";
-import { FaRegCalendar } from "@react-icons/all-files/fa/FaRegCalendar";
+import { FaPhone } from "@react-icons/all-files/fa/FaPhone";
 import DetailBox from "@/components/detail/DetailBox";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { checkUserPackage } from "@/actions/getUserFromDB";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const sessions = await auth();
 
   if (sessions && sessions.user) {
+    const packageType = await checkUserPackage(sessions.user.email ?? "");
     return (
       <div className="w-[90%] md:w-[90%] mx-auto grid grid-cols-1 md:grid-cols-2 gap-5 ">
         <DetailBox
           icon={<FaAddressCard className="w-8 h-8 text-red-800" />}
-          info={[
-            { title: "Capitale di rete", value: "3.47" },
-            {
-              title: "Luogo di nascita",
-              value: "Napoli, NA",
-            },
-            {
-              title: "Data di nascita",
-              value: "06/10/1999",
-            },
-          ]}
           title="Anagrafica"
           idUser={params.id}
         />
 
-        {sessions && sessions.user.role === "admin" && (
+        {packageType?.packageType === "premium" && (
           <DetailBox
-            icon={<FaBuilding className="w-8 h-8 text-red-800" />}
-            info={[{ title: "Partecipazioni", value: "1" }]}
-            title="Proprietà"
+            icon={<MdWork className="w-8 h-8 text-red-800" />}
+            title="Lavoro"
+            idUser={params.id}
+          />
+        )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<MdWork className="w-8 h-8 text-red-800" />}
+            title="Lavoro"
             idUser={params.id}
           />
         )}
 
-        <DetailBox
-          icon={<HiLocationMarker className="w-8 h-8 text-red-800" />}
-          info={[{ title: "indirizzi", value: "2" }]}
-          title="Indirizzi"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
-          info={[{ title: "Imprese con incarichi", value: "4" }]}
-          title="Controllo"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<RiGovernmentFill className="w-8 h-8 text-red-800" />}
-          info={[{ title: "Cariche ricoperte", value: "4" }]}
-          title="Cariche pubbliche"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<MdThumbDown className="w-8 h-8 text-red-800" />}
-          info={[{ title: "Cariche ricoperte", value: "4" }]}
-          title="Negatività"
-          idUser={params.id}
-        />
-        <DetailBox
-          icon={<FaRegCalendar className="w-8 h-8 text-red-800" />}
-          info={[{ title: "Precedenti incarichi", value: "1" }]}
-          title="Storia"
-          idUser={params.id}
-        />
+        {packageType?.packageType === "premium" && (
+          <DetailBox
+            icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
+            title="Ultime SCP"
+            idUser={params.id}
+          />
+        )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<AiOutlineTeam className="w-8 h-8 text-red-800" />}
+            title="Ultime SCP"
+            idUser={params.id}
+          />
+        )}
+
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<FaPhone className="w-8 h-8 text-red-800" />}
+            title="Telefono"
+            idUser={params.id}
+          />
+        )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<FaPhone className="w-8 h-8 text-red-800" />}
+            title="ABICAB"
+            idUser={params.id}
+          />
+        )}
+        {packageType?.packageType === "gold" && (
+          <DetailBox
+            icon={<FaPhone className="w-8 h-8 text-red-800" />}
+            title="cc"
+            idUser={params.id}
+          />
+        )}
       </div>
     );
   } else {

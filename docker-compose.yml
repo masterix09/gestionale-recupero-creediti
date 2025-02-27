@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: postgres_container
+    restart: always
+    ports:
+      - "5433:5432" # Cambiato da 5432 a 5433 per evitare conflitti
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  nextjs:
+    build: .
+    container_name: nextjs_app
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: "postgresql://myuser:mypassword@postgres:5432/mydatabase" # Correct!
+      NEXT_PUBLIC_DATABASE_URL: ${NEXT_PUBLIC_DATABASE_URL}
+      AUTH_SECRET: ${AUTH_SECRET} # Usa ${} per caricare dal file .env
+      AUTH_URL: "http://host.docker.internal:3000/"
+
+volumes:
+  postgres_data:

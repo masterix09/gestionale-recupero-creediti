@@ -8,11 +8,10 @@ import { BiCommentDetail } from "@react-icons/all-files/bi/BiCommentDetail";
 // You can use a Zod schema here if you want.
 export type Entity = {
   id: string;
+  CF: string;
   nome: string;
   cognome: string;
-  codice_fiscale: string;
-  telefono: string;
-  partita_iva: string;
+  PIVA: string;
 };
 
 export const columns: ColumnDef<Entity>[] = [
@@ -25,15 +24,11 @@ export const columns: ColumnDef<Entity>[] = [
     header: "Cognome",
   },
   {
-    accessorKey: "codice_fiscale",
+    accessorKey: "CF",
     header: "CF",
   },
   {
-    accessorKey: "telefono",
-    header: "Telefono",
-  },
-  {
-    accessorKey: "partita_iva",
+    accessorKey: "PIVA",
     header: "PIVA",
   },
   {

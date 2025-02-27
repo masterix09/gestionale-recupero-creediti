@@ -1,0 +1,96 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("PROVA_DATABASE_URL")
+}
+
+model User {
+  id          String @id @unique
+  email       String
+  password    String
+  role        String
+  packageType String
+  token       Int
+}
+
+model Persona {
+  id                     String                 @id @unique
+  CF                     String                 @unique
+  PIVA                   String
+  nome                   String
+  cognome                String
+  sesso                  String
+  comune_nascita         String
+  provincia_nascita      String
+  data_nascita           String
+  data_morte             String
+  via                    String[]
+  cap                    String[]
+  comune                 String[]
+  provincia              String[]
+  idTelefono             Telefono[]
+  idDatore               Datore[]
+  idCessionePignoramento CessionePignoramento[]
+  AbiCab                 AbiCab[]
+}
+
+model Datore {
+  id                  String @id @unique
+  CF                  String
+  tipo                String
+  reddito             String
+  mese                String
+  tipologia_contratto String
+  inizio              String
+  fine                String
+  PIVA                String
+  ragione_sociale     String
+  nome                String
+  via                 String
+  cap                 String
+  comune              String
+  provincia           String
+
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
+  AbiCab    AbiCab[]
+}
+
+model Telefono {
+  id    String @id @unique
+  value String
+
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
+}
+
+model CessionePignoramento {
+  id                    String   @id @unique
+  cessione              String
+  scadenza_cessione     String
+  pignoramento          String
+  scadenza_pignoramento String
+  Persona               Persona? @relation(fields: [personaID], references: [id])
+  personaID             String?
+}
+
+model AbiCab {
+  id        String   @id @unique
+  ABI       String[]
+  CAB       String[]
+  Anno      String[]
+  Datore    Datore?  @relation(fields: [datoreID], references: [id])
+  datoreID  String?
+  Persona   Persona? @relation(fields: [personaID], references: [id])
+  personaID String?
+}
+
+model ContoCorrente {
+  id    String @id @unique
+  nome  String
+  CF    String
+  banca String
+}

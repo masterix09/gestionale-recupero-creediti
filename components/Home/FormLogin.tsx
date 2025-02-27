@@ -12,7 +12,11 @@ const FormLogin = () => {
           <form
             action={async (formData) => {
               "use server";
-              await signIn("credentials", formData);
+              try {
+                await signIn("credentials", formData);
+              } catch (error) {
+                // console.log(error);
+              }
             }}
             className="w-full flex flex-col gap-y-4 p-3"
           >
