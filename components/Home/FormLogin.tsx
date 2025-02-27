@@ -15,7 +15,7 @@ const FormLogin = () => {
               try {
                 await signIn("credentials", formData);
               } catch (error) {
-                console.log(error);
+                // console.log(error);
               }
             }}
             className="w-full flex flex-col gap-y-4 p-3"

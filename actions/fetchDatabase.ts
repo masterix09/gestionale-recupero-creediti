@@ -12,8 +12,8 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
 const decreaseToken = async (id: string, plafond: number) => {
-  console.log(id);
-  console.log("ci son");
+  // console.log(id);
+  // console.log("ci son");
 
   const res = await prisma.user.update({
     where: {
@@ -27,7 +27,7 @@ const decreaseToken = async (id: string, plafond: number) => {
   });
 
   revalidatePath("/category/lavoro/[id]", "layout");
-  console.log(res);
+  // console.log(res);
 };
 
 export const addToken = async (data: { email: string; plafond: number }) => {
@@ -53,7 +53,7 @@ export const addToken = async (data: { email: string; plafond: number }) => {
     });
     return "OK";
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return "NO";
   }
 };

@@ -35,9 +35,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileAnagrafica = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -163,7 +163,7 @@ export default function Page() {
             datore: arrDatore,
           };
         });
-        console.log(data);
+        // console.log(data);
 
         const res = await updateProcessFile(data);
 
@@ -187,9 +187,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileAnagraficaLavoro = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -324,7 +324,7 @@ export default function Page() {
           };
         });
 
-        console.log("data => ", data);
+        // console.log("data => ", data);
         const res = await addDataToDatore(data);
 
         if (res === "OK") {
@@ -357,9 +357,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileTelefono = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -374,12 +374,12 @@ export default function Page() {
         const sheet = workbook.Sheets[sheetName];
         const parsedData: { CF: string; [key: string]: string }[] =
           XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log(parsedData);
+        // console.log(parsedData);
 
         // Esegui la trasformazione
         const transformedArray = transformArray(parsedData);
 
-        console.log("transformed array => ", transformedArray);
+        // console.log("transformed array => ", transformedArray);
 
         //@ts-ignore
         setData(transformedArray);
@@ -404,9 +404,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileSCP = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -420,7 +420,7 @@ export default function Page() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log(parsedData);
+        // console.log(parsedData);
         //@ts-ignore
         setData(parsedData);
         const data = parsedData.map((item) => {
@@ -456,9 +456,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileABICAB = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -472,7 +472,7 @@ export default function Page() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log("parsed => ", parsedData);
+        // console.log("parsed => ", parsedData);
         //@ts-ignore
         setData(parsedData);
         const data = parsedData.map((item) => {
@@ -520,9 +520,9 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileCC = (e) => {
-    console.log(e);
+    // console.log(e);
     const file = e.target.files[0];
-    console.log(file);
+    // console.log(file);
 
     if (!file) return;
 
@@ -536,7 +536,7 @@ export default function Page() {
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
         const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log("parsed => ", parsedData);
+        // console.log("parsed => ", parsedData);
         //@ts-ignore
         setData(parsedData);
         const data = parsedData.map((item) => {

@@ -5,18 +5,14 @@
   "scripts": {
     "dev": "next dev",
     "build": "npx prisma generate && next build",
-    "start": "next start -p 3000",
+    "start": "next start -H 0.0.0.0 -p 3000",
     "lint": "next lint"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.4.0",
-    "@libsql/client": "^0.6.0",
+    "@hookform/resolvers": "^4.1.0",
     "@prisma/adapter-libsql": "^5.14.0",
     "@prisma/client": "^5.14.0",
-    "@radix-ui/react-label": "^2.0.2",
-    "@radix-ui/react-radio-group": "^1.1.3",
     "@radix-ui/react-slot": "^1.0.2",
-    "@radix-ui/react-toast": "^1.1.5",
     "@react-icons/all-files": "^4.1.0",
     "@tanstack/react-table": "^8.16.0",
     "class-variance-authority": "^0.7.0",
@@ -24,15 +20,16 @@
     "lucide-react": "^0.372.0",
     "next": "14.2.2",
     "next-auth": "^5.0.0-beta.16",
+    "radix-ui": "^1.1.3",
     "react": "^18",
     "react-dom": "^18",
-    "react-hook-form": "^7.51.4",
+    "react-hook-form": "^7.54.2",
     "react-icons": "^5.2.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7",
     "uuidv4": "^6.2.13",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz",
-    "zod": "^3.23.8"
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@types/node": "^20",

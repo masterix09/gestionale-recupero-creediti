@@ -57,7 +57,7 @@ export async function addDataToDatore(data: TData[]) {
           cfPersona,
           cfdatore,
         } = datore;
-        console.log("cfPersona => ", cfPersona);
+        // console.log("cfPersona => ", cfPersona);
         await prisma.datore.create({
           data: {
             id: uuid().toString(),
@@ -82,7 +82,7 @@ export async function addDataToDatore(data: TData[]) {
     });
     return "OK";
   } catch (error) {
-    console.log(error);
+    // console.log(error);
     return "error";
   }
 }
@@ -90,13 +90,13 @@ export async function addDataToDatore(data: TData[]) {
 export async function updateProcessFile(data: TData[]) {
   try {
     data.forEach(async (item) => {
-      console.log(item.data_nascita);
+      // console.log(item.data_nascita);
 
       const newBirthDate = item.data_nascita.slice(
         1,
         item.data_nascita.length - 1
       );
-      console.log(newBirthDate);
+      // console.log(newBirthDate);
 
       const persona = await prisma.persona.findFirst({
         where: {
@@ -177,7 +177,7 @@ export async function updateProcessFileTelefono(
         },
       });
 
-      console.log(idPersona);
+      // console.log(idPersona);
       item.Tel.map(async (element) => {
         element !== "" &&
           (await prisma.telefono.upsert({
