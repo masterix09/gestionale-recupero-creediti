@@ -6,7 +6,6 @@ import { redirect, RedirectType } from "next/navigation";
 import { getRoleFromId } from "@/actions/getUserFromDB";
 import { RiMoneyEuroCircleFill } from "@react-icons/all-files/ri/RiMoneyEuroCircleFill";
 import { getTokenById } from "@/actions/fetchDatabase";
-import ViewToken from "./ViewToken";
 
 const Navbar = async () => {
   const sessions = await auth();
