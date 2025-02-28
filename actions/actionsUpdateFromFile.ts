@@ -107,6 +107,8 @@ export async function updateProcessFile(data: TData[]) {
         },
       });
 
+      console.log("CF => ", item.CF)
+
       await prisma.persona.upsert({
         where: {
           CF: item.CF,
