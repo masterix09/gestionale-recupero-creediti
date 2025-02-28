@@ -89,6 +89,9 @@ export async function addDataToDatore(data: TData[]) {
 
 export async function updateProcessFile(data: TData[]) {
   try {
+
+    console.log(data);
+    
     data.forEach(async (item) => {
       // console.log(item.data_nascita);
 
@@ -159,6 +162,8 @@ export async function updateProcessFile(data: TData[]) {
 
     return "OK";
   } catch (error) {
+    console.log("errror", error);
+    
     return "error";
   }
 }
