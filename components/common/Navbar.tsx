@@ -12,7 +12,7 @@ const Navbar = async () => {
   const sessions = await auth();
   const role = await getRoleFromId(sessions?.user.id ?? "");
 
-  // const token = await getTokenById(sessions?.user.id ?? "");
+  const token = await getTokenById(sessions?.user.id ?? "");
 
   return (
     <div className="w-full p-3 border-b-2 border-b-white mb-4">
@@ -48,11 +48,11 @@ const Navbar = async () => {
             </form>
           )}
           {role?.role === "user" && (
-            // <div className="flex gap-x-3">
-            //   <RiMoneyEuroCircleFill className="w-6 h-6 text-white" />
-            //   <span className="text-white font-bold">{token?.token}</span>
-            // </div>
-            <ViewToken sessions={sessions} />
+            <div className="flex gap-x-3">
+              <RiMoneyEuroCircleFill className="w-6 h-6 text-white" />
+              <span className="text-white font-bold">{token?.token}</span>
+            </div>
+            // <ViewToken sessions={sessions} />
           )}
         </div>
       </div>
