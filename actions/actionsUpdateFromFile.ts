@@ -93,7 +93,8 @@ export async function updateProcessFile(data: TData[]) {
     console.log(data);
     
     data.forEach(async (item) => {
-      // console.log(item.data_nascita);
+      console.log("ci sono dentro al for");
+      console.log("item ", item);
 
       const newBirthDate = item.data_nascita.slice(
         1,
@@ -106,6 +107,8 @@ export async function updateProcessFile(data: TData[]) {
           CF: item.CF,
         },
       });
+
+      console.log("persona find => ", persona)
 
       console.log("CF => ", item.CF)
 
@@ -161,6 +164,8 @@ export async function updateProcessFile(data: TData[]) {
     });
 
     //    addDataToDatore(data)
+
+    console.log("finito")
 
     return "OK";
   } catch (error) {
