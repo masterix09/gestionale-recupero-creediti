@@ -250,12 +250,12 @@ export async function updateProcessFileABICAB(
     ABI: string;
     CAB: string;
     Anno: string;
-    ABI1: string;
-    CAB1: string;
-    Anno1: string;
-    ABI2: string;
-    CAB2: string;
-    Anno2: string;
+    ABI_1: string;
+    CAB_1: string;
+    Anno_1: string;
+    ABI_2: string;
+    CAB_2: string;
+    Anno_2: string;
   }[]
 ) {
   try {
@@ -274,36 +274,36 @@ export async function updateProcessFileABICAB(
           update: {
             ABI: [
               item.ABI?.toString(),
-              item.ABI1?.toString(),
-              item.ABI2?.toString(),
+              item.ABI_1?.toString(),
+              item.ABI_2?.toString(),
             ],
             Anno: [
               item.Anno?.toString(),
-              item.Anno1?.toString(),
-              item.Anno2?.toString(),
+              item.Anno_1?.toString(),
+              item.Anno_2?.toString(),
             ],
             CAB: [
               item.CAB?.toString(),
-              item.CAB1?.toString(),
-              item.CAB2?.toString(),
+              item.CAB_1?.toString(),
+              item.CAB_2?.toString(),
             ],
             datoreID: datore?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
           },
           create: {
             ABI: [
               item.ABI?.toString(),
-              item.ABI1?.toString(),
-              item.ABI2?.toString(),
+              item.ABI_1?.toString(),
+              item.ABI_2?.toString(),
             ],
             Anno: [
               item.Anno?.toString(),
-              item.Anno1?.toString(),
-              item.Anno2?.toString(),
+              item.Anno_1?.toString(),
+              item.Anno_2?.toString(),
             ],
             CAB: [
               item.CAB?.toString(),
-              item.CAB1?.toString(),
-              item.CAB2?.toString(),
+              item.CAB_1?.toString(),
+              item.CAB_2?.toString(),
             ],
             datoreID: datore?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
             id: item.CF,
@@ -323,36 +323,36 @@ export async function updateProcessFileABICAB(
           update: {
             ABI: [
               item.ABI?.toString(),
-              item.ABI1?.toString(),
-              item.ABI2?.toString(),
+              item.ABI_1?.toString(),
+              item.ABI_2?.toString(),
             ],
             Anno: [
               item.Anno?.toString(),
-              item.Anno1?.toString(),
-              item.Anno2?.toString(),
+              item.Anno_1?.toString(),
+              item.Anno_2?.toString(),
             ],
             CAB: [
               item.CAB?.toString(),
-              item.CAB1?.toString(),
-              item.CAB2?.toString(),
+              item.CAB_1?.toString(),
+              item.CAB_2?.toString(),
             ],
             personaID: persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
           },
           create: {
             ABI: [
               item.ABI?.toString(),
-              item.ABI1?.toString(),
-              item.ABI2?.toString(),
+              item.ABI_1?.toString(),
+              item.ABI_2?.toString(),
             ],
             Anno: [
               item.Anno?.toString(),
-              item.Anno1?.toString(),
-              item.Anno2?.toString(),
+              item.Anno_1?.toString(),
+              item.Anno_2?.toString(),
             ],
             CAB: [
               item.CAB?.toString(),
-              item.CAB1?.toString(),
-              item.CAB2?.toString(),
+              item.CAB_1?.toString(),
+              item.CAB_2?.toString(),
             ],
             personaID: persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
             id: item.CF,

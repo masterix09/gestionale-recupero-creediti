@@ -486,17 +486,17 @@ export default function Page() {
             // @ts-ignore
             Anno: item[`Anno`] as string,
             // @ts-ignore
-            ABI1: item[`ABI_1`] as string,
+            ABI_1: item[`ABI_1`] as string,
             // @ts-ignore
-            CAB1: item[`CAB_1`] as string,
+            CAB_1: item[`CAB_1`] as string,
             // @ts-ignore
-            Anno1: item[`Anno_1`] as string,
+            Anno_1: item[`Anno_1`] as string,
             // @ts-ignore
-            ABI2: item[`ABI_2`] as string,
+            ABI_2: item[`ABI_2`] as string,
             // @ts-ignore
-            CAB2: item[`CAB_2`] as string,
+            CAB_2: item[`CAB_2`] as string,
             // @ts-ignore
-            Anno2: item[`Anno_2`] as string,
+            Anno_2: item[`Anno_2`] as string,
           };
         });
 
