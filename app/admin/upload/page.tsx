@@ -9,7 +9,7 @@ import {
 } from "@/actions/actionsUpdateFromFile";
 import { useToast } from "@/components/ui/use-toast";
 import { useRef, useState } from "react";
-import XLSX from "xlsx";
+import * as XLSX from "xlsx";
 
 export default function Page() {
   const [data, setData] = useState([]);
