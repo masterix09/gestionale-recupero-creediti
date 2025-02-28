@@ -82,7 +82,7 @@ export async function addDataToDatore(data: TData[]) {
     });
     return "OK";
   } catch (error) {
-    // console.log(error);
+    console.log(error);
     return "error";
   }
 }
