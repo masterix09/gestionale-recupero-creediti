@@ -1,7 +1,7 @@
 "use server";
 
 import prisma from "@/lib/db";
-import { uuid } from "uuidv4";
+import { v4 as uuid_v4 } from "uuid";
 
 type TData = {
   CF: string;
@@ -60,7 +60,7 @@ export async function addDataToDatore(data: TData[]) {
         // console.log("cfPersona => ", cfPersona);
         await prisma.datore.create({
           data: {
-            id: uuid().toString(),
+            id: uuid_v4().toString(),
             cap,
             CF: cfdatore ?? "",
             comune,
@@ -375,7 +375,7 @@ export async function uploadCCFile(
         banca: item.banca,
         CF: item.CF,
         nome: item.nome,
-        id: uuid().toString(),
+        id: uuid_v4().toString(),
       };
     });
 
