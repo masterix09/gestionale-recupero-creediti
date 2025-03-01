@@ -40,13 +40,10 @@ export async function addDataToDatore(data: TData[]) {
   try {
     console.log("Inizio elaborazione di ", data.length, " persone");
 
-    // Usa Promise.all per eseguire tutte le operazioni in parallelo
-    await Promise.all(
+    const results = await Promise.all(
       data.flatMap((persona) =>
         persona.datore.map(async (datore) => {
           try {
-            console.log("Creazione datore per persona con CF: ", persona.CF);
-
             const {
               cap,
               comune,
@@ -67,7 +64,7 @@ export async function addDataToDatore(data: TData[]) {
 
             await prisma.datore.create({
               data: {
-                id: uuid_v4(), // Usa uuidv4()
+                id: uuid_v4(),
                 cap,
                 CF: cfdatore ?? "",
                 comune,
@@ -87,17 +84,25 @@ export async function addDataToDatore(data: TData[]) {
             });
 
             console.log("Datore creato per persona con CF: ", persona.CF);
+            return { success: true };
           } catch (innerError) {
             console.error(
               "Errore durante la creazione del datore per persona con CF: ",
               persona.CF,
               innerError
             );
-            // Puoi scegliere di lanciare nuovamente l'errore o gestirlo diversamente
+            return { success: false, error: innerError };
           }
         })
       )
     );
+
+    const hasErrors = results.some((result) => !result.success);
+
+    if (hasErrors) {
+      console.error("Elaborazione completata con errori");
+      return "error";
+    }
 
     console.log("Elaborazione completata con successo");
     return "OK";
@@ -111,28 +116,20 @@ export async function updateProcessFile(data: TData[]) {
   try {
     console.log("Inizio elaborazione di ", data.length, " record");
 
-    // Usa Promise.all per eseguire tutte le operazioni in parallelo
-    await Promise.all(
+    const results = await Promise.all(
       data.map(async (item) => {
         try {
-          console.log("Elaborazione record con CF: ", item.CF);
-
-          // Formatta la data di nascita una volta sola
           const newBirthDate = item.data_nascita.slice(
             1,
             item.data_nascita.length - 1
           );
 
-          // Trova la persona esistente
           const persona = await prisma.persona.findFirst({
             where: {
               CF: item.CF,
             },
           });
 
-          console.log("Persona trovata: ", persona);
-
-          // Esegui l'upsert
           await prisma.persona.upsert({
             where: {
               CF: item.CF,
@@ -178,16 +175,24 @@ export async function updateProcessFile(data: TData[]) {
           });
 
           console.log("Upsert completato per CF: ", item.CF);
+          return { success: true };
         } catch (innerError) {
           console.error(
             "Errore durante l'elaborazione del record con CF: ",
             item.CF,
             innerError
           );
-          // Puoi scegliere di lanciare nuovamente l'errore o gestirlo diversamente
+          return { success: false, error: innerError };
         }
       })
     );
+
+    const hasErrors = results.some((result) => !result.success);
+
+    if (hasErrors) {
+      console.error("Elaborazione completata con errori");
+      return "error";
+    }
 
     console.log("Elaborazione completata con successo");
     return "OK";
