@@ -65,7 +65,7 @@ export async function addDataToDatore(data: TData[]) {
             await prisma.datore.create({
               data: {
                 id: uuid_v4(),
-                cap,
+                cap: cap.toString() ?? "",
                 CF: cfdatore ?? "",
                 comune,
                 fine,
@@ -121,7 +121,7 @@ export async function updateProcessFile(data: TData[]) {
         try {
           const newBirthDate = item.data_nascita.slice(
             1,
-            item.data_nascita.length - 1
+            item.data_nascita.length
           );
 
           const persona = await prisma.persona.findFirst({
