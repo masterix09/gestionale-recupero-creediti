@@ -89,91 +89,181 @@ export async function addDataToDatore(data: TData[]) {
 
 export async function updateProcessFile(data: TData[]) {
   try {
+    console.log("Inizio elaborazione di ", data.length, " record");
 
-    console.log(data);
-    
-    data.forEach(async (item) => {
-      console.log("ci sono dentro al for");
-      console.log("item ", item);
+    // Usa Promise.all per eseguire tutte le operazioni in parallelo
+    await Promise.all(
+      data.map(async (item) => {
+        try {
+          console.log("Elaborazione record con CF: ", item.CF);
 
-      const newBirthDate = item.data_nascita.slice(
-        1,
-        item.data_nascita.length - 1
-      );
-      // console.log(newBirthDate);
+          // Formatta la data di nascita una volta sola
+          const newBirthDate = item.data_nascita.slice(
+            1,
+            item.data_nascita.length - 1
+          );
 
-      const persona = await prisma.persona.findFirst({
-        where: {
-          CF: item.CF,
-        },
-      });
+          // Trova la persona esistente
+          const persona = await prisma.persona.findFirst({
+            where: {
+              CF: item.CF,
+            },
+          });
 
-      console.log("persona find => ", persona)
+          console.log("Persona trovata: ", persona);
 
-      console.log("CF => ", item.CF)
+          // Esegui l'upsert
+          await prisma.persona.upsert({
+            where: {
+              CF: item.CF,
+            },
+            create: {
+              id: item.CF,
+              cap: [item.cap.toString()],
+              cognome: item.cognome,
+              comune: [item.comune],
+              comune_nascita: item.comune_nascita,
+              data_morte: item.data_morte,
+              data_nascita: newBirthDate.toString(),
+              nome: item.nome,
+              PIVA: item.PIVA,
+              provincia: [item.provincia],
+              provincia_nascita: item.provincia_nascita,
+              sesso: item.sesso,
+              via: [item.via],
+              CF: item.CF,
+            },
+            update: {
+              cap: persona?.cap.includes(item.cap.toString())
+                ? persona.cap
+                : [...(persona?.cap || []), item.cap.toString()],
+              cognome: item.cognome,
+              comune: persona?.comune.includes(item.comune.toString())
+                ? persona.comune
+                : [...(persona?.comune || []), item.comune.toString()],
+              comune_nascita: item.comune_nascita,
+              data_morte: item.data_morte,
+              data_nascita: newBirthDate.toString(),
+              nome: item.nome,
+              PIVA: item.PIVA,
+              provincia: persona?.provincia.includes(item.provincia.toString())
+                ? persona.provincia
+                : [...(persona?.provincia || []), item.provincia.toString()],
+              provincia_nascita: item.provincia_nascita,
+              sesso: item.sesso,
+              via: persona?.via.includes(item.via.toString())
+                ? persona.via
+                : [...(persona?.via || []), item.via.toString()],
+            },
+          });
 
-      await prisma.persona.upsert({
-        where: {
-          CF: item.CF,
-        },
-        create: {
-          id: item.CF,
-          cap: [item.cap.toString()],
-          cognome: item.cognome,
-          comune: [item.comune],
-          comune_nascita: item.comune_nascita,
-          data_morte: item.data_morte,
-          data_nascita: newBirthDate.toString(),
-          nome: item.nome,
-          PIVA: item.PIVA,
-          provincia: [item.provincia],
-          provincia_nascita: item.provincia_nascita,
-          sesso: item.sesso,
-          via: [item.via],
-          CF: item.CF,
-        },
-        update: {
-          cap:
-            persona?.cap.at(persona.cap.length - 1) !== item.cap.toString()
-              ? persona?.cap.concat(item.cap.toString())
-              : [...persona.cap],
-          cognome: item.cognome,
-          comune:
-            persona?.comune.at(persona.comune.length - 1) !==
-            item.comune.toString()
-              ? persona?.comune.concat(item.comune.toString())
-              : [...persona.comune],
-          comune_nascita: item.comune_nascita,
-          data_morte: item.data_morte,
-          data_nascita: item.data_nascita,
-          nome: item.nome,
-          PIVA: item.PIVA,
-          provincia:
-            persona?.provincia.at(persona.provincia.length - 1) !==
-            item.provincia.toString()
-              ? persona?.provincia.concat(item.provincia.toString())
-              : [...persona.provincia],
-          provincia_nascita: item.provincia_nascita,
-          sesso: item.sesso,
-          via:
-            persona?.via.at(persona.via.length - 1) !== item.via.toString()
-              ? persona?.via.concat(item.via.toString())
-              : [...persona.via],
-        },
-      });
-    });
+          console.log("Upsert completato per CF: ", item.CF);
+        } catch (innerError) {
+          console.error(
+            "Errore durante l'elaborazione del record con CF: ",
+            item.CF,
+            innerError
+          );
+          // Puoi scegliere di lanciare nuovamente l'errore o gestirlo diversamente
+        }
+      })
+    );
 
-    //    addDataToDatore(data)
-
-    console.log("finito")
-
+    console.log("Elaborazione completata con successo");
     return "OK";
   } catch (error) {
-    console.log("errror", error);
-    
+    console.error("Errore generale durante l'elaborazione: ", error);
     return "error";
   }
 }
+
+// export async function updateProcessFile(data: TData[]) {
+//   try {
+
+//     console.log(data);
+
+//     data.forEach(async (item) => {
+//       console.log("ci sono dentro al for");
+//       console.log("item ", item);
+
+//       const newBirthDate = item.data_nascita.slice(
+//         1,
+//         item.data_nascita.length - 1
+//       );
+//       // console.log(newBirthDate);
+
+//       const persona = await prisma.persona.findFirst({
+//         where: {
+//           CF: item.CF,
+//         },
+//       });
+
+//       console.log("persona find => ", persona)
+
+//       console.log("CF => ", item.CF)
+
+//       await prisma.persona.upsert({
+//         where: {
+//           CF: item.CF,
+//         },
+//         create: {
+//           id: item.CF,
+//           cap: [item.cap.toString()],
+//           cognome: item.cognome,
+//           comune: [item.comune],
+//           comune_nascita: item.comune_nascita,
+//           data_morte: item.data_morte,
+//           data_nascita: newBirthDate.toString(),
+//           nome: item.nome,
+//           PIVA: item.PIVA,
+//           provincia: [item.provincia],
+//           provincia_nascita: item.provincia_nascita,
+//           sesso: item.sesso,
+//           via: [item.via],
+//           CF: item.CF,
+//         },
+//         update: {
+//           cap:
+//             persona?.cap.at(persona.cap.length - 1) !== item.cap.toString()
+//               ? persona?.cap.concat(item.cap.toString())
+//               : [...persona.cap],
+//           cognome: item.cognome,
+//           comune:
+//             persona?.comune.at(persona.comune.length - 1) !==
+//             item.comune.toString()
+//               ? persona?.comune.concat(item.comune.toString())
+//               : [...persona.comune],
+//           comune_nascita: item.comune_nascita,
+//           data_morte: item.data_morte,
+//           data_nascita: item.data_nascita,
+//           nome: item.nome,
+//           PIVA: item.PIVA,
+//           provincia:
+//             persona?.provincia.at(persona.provincia.length - 1) !==
+//             item.provincia.toString()
+//               ? persona?.provincia.concat(item.provincia.toString())
+//               : [...persona.provincia],
+//           provincia_nascita: item.provincia_nascita,
+//           sesso: item.sesso,
+//           via:
+//             persona?.via.at(persona.via.length - 1) !== item.via.toString()
+//               ? persona?.via.concat(item.via.toString())
+//               : [...persona.via],
+//         },
+//       });
+//     });
+
+//     //    addDataToDatore(data)
+
+//     console.log("finito")
+
+//     return "OK";
+//   } catch (error) {
+//     console.log("errror", error);
+
+//     return "error";
+//   }
+// }
 
 export async function updateProcessFileTelefono(
   data: { CF: string; Tel: string[] }[]
