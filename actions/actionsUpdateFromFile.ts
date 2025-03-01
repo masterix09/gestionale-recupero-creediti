@@ -82,15 +82,19 @@ export async function addDataToDatore(data: TData[]) {
     });
     return "OK";
   } catch (error) {
-    // console.log(error);
+    console.log(error);
     return "error";
   }
 }
 
 export async function updateProcessFile(data: TData[]) {
   try {
+
+    console.log(data);
+    
     data.forEach(async (item) => {
-      // console.log(item.data_nascita);
+      console.log("ci sono dentro al for");
+      console.log("item ", item);
 
       const newBirthDate = item.data_nascita.slice(
         1,
@@ -103,6 +107,10 @@ export async function updateProcessFile(data: TData[]) {
           CF: item.CF,
         },
       });
+
+      console.log("persona find => ", persona)
+
+      console.log("CF => ", item.CF)
 
       await prisma.persona.upsert({
         where: {
@@ -157,8 +165,12 @@ export async function updateProcessFile(data: TData[]) {
 
     //    addDataToDatore(data)
 
+    console.log("finito")
+
     return "OK";
   } catch (error) {
+    console.log("errror", error);
+    
     return "error";
   }
 }
