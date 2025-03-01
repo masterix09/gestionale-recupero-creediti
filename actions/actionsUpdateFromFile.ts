@@ -38,51 +38,71 @@ type TData = {
 
 export async function addDataToDatore(data: TData[]) {
   try {
-    data.forEach((persona) => {
-      persona.datore.forEach(async (datore) => {
-        const {
-          cap,
-          comune,
-          fine,
-          inizio,
-          mese,
-          nome,
-          partTime,
-          piva,
-          provincia,
-          ragioneSociale,
-          reddito,
-          tipo,
-          via,
-          cfPersona,
-          cfdatore,
-        } = datore;
-        // console.log("cfPersona => ", cfPersona);
-        await prisma.datore.create({
-          data: {
-            id: uuid_v4().toString(),
-            cap,
-            CF: cfdatore ?? "",
-            comune,
-            fine,
-            inizio,
-            mese: mese?.toString() ?? "",
-            nome,
-            PIVA: piva,
-            provincia,
-            ragione_sociale: ragioneSociale,
-            reddito: reddito?.toString() ?? "",
-            tipo,
-            tipologia_contratto: partTime,
-            via,
-            personaID: cfPersona ?? "",
-          },
-        });
-      });
-    });
+    console.log("Inizio elaborazione di ", data.length, " persone");
+
+    // Usa Promise.all per eseguire tutte le operazioni in parallelo
+    await Promise.all(
+      data.flatMap((persona) =>
+        persona.datore.map(async (datore) => {
+          try {
+            console.log("Creazione datore per persona con CF: ", persona.CF);
+
+            const {
+              cap,
+              comune,
+              fine,
+              inizio,
+              mese,
+              nome,
+              partTime,
+              piva,
+              provincia,
+              ragioneSociale,
+              reddito,
+              tipo,
+              via,
+              cfPersona,
+              cfdatore,
+            } = datore;
+
+            await prisma.datore.create({
+              data: {
+                id: uuid_v4(), // Usa uuidv4()
+                cap,
+                CF: cfdatore ?? "",
+                comune,
+                fine,
+                inizio,
+                mese: mese?.toString() ?? "",
+                nome,
+                PIVA: piva,
+                provincia,
+                ragione_sociale: ragioneSociale,
+                reddito: reddito?.toString() ?? "",
+                tipo,
+                tipologia_contratto: partTime,
+                via,
+                personaID: cfPersona ?? "",
+              },
+            });
+
+            console.log("Datore creato per persona con CF: ", persona.CF);
+          } catch (innerError) {
+            console.error(
+              "Errore durante la creazione del datore per persona con CF: ",
+              persona.CF,
+              innerError
+            );
+            // Puoi scegliere di lanciare nuovamente l'errore o gestirlo diversamente
+          }
+        })
+      )
+    );
+
+    console.log("Elaborazione completata con successo");
     return "OK";
   } catch (error) {
-    console.log(error);
+    console.error("Errore generale durante l'elaborazione: ", error);
     return "error";
   }
 }
