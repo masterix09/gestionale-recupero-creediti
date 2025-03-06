@@ -524,10 +524,8 @@ export async function updateProcessFileABICAB(
                 item.CAB_1?.toString(),
                 item.CAB_2?.toString(),
               ],
-              datoreID:
-                datore?.id ??
-                persona?.id ??
-                "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
+              datoreID: datore?.id,
+              personaID: persona?.id,
             },
             create: {
               ABI: [
@@ -545,9 +543,8 @@ export async function updateProcessFileABICAB(
                 item.CAB_1?.toString(),
                 item.CAB_2?.toString(),
               ],
-              datoreID: datore?.id
-                ? datore.id
-                : persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
+              datoreID: datore?.id,
+              personaID: persona?.id,
               id: item.CF,
             },
           });
