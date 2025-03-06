@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { revalidatePath } from "next/cache";
 import { v4 as uuid_v4 } from "uuid";
 
 type TData = {
@@ -130,6 +131,8 @@ export async function addDataToDatore(data: TData[]) {
       console.log("Aggiornati ", recordsToUpdate.length, " datori");
     }
 
+    revalidatePath(`/category/lavoro`);
+
     console.log("Elaborazione completata con successo");
     return "OK";
   } catch (error) {
@@ -222,6 +225,7 @@ export async function updateProcessFile(data: TData[]) {
       return "error";
     }
 
+    revalidatePath(`/category/anagrafica`);
     console.log("Elaborazione completata con successo");
     return "OK";
   } catch (error) {
@@ -383,6 +387,7 @@ export async function updateProcessFileTelefono(
       return "error";
     }
 
+    revalidatePath("/category/telefono");
     console.log("Elaborazione telefoni completata con successo");
     return "OK";
   } catch (error) {
@@ -452,6 +457,7 @@ export async function updateProcessFileSCP(
       return "error";
     }
 
+    revalidatePath("/category/ultime-scp");
     console.log("Elaborazione SCP completata con successo");
     return "OK";
   } catch (error) {
@@ -568,6 +574,7 @@ export async function updateProcessFileABICAB(
       return "error";
     }
 
+    revalidatePath("/category/abicab");
     console.log("Elaborazione ABICAB completata con successo");
     return "OK";
   } catch (error) {
@@ -619,6 +626,8 @@ export async function uploadCCFile(
     } else {
       console.log("Nessun conto corrente da creare.");
     }
+
+    revalidatePath("/category/cc");
 
     console.log("Upload conti correnti completato con successo");
     return "OK";
