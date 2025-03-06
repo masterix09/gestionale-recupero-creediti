@@ -7,12 +7,14 @@ import {
   updateProcessFileTelefono,
   uploadCCFile,
 } from "@/actions/actionsUpdateFromFile";
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useToast } from "@/components/ui/use-toast";
 import { useRef, useState } from "react";
 import * as XLSX from "xlsx";
 
 export default function Page() {
   const [data, setData] = useState([]);
+  const [isPending, setIspending] = useState<boolean>(false);
 
   const { toast } = useToast();
 
@@ -35,6 +37,7 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileAnagrafica = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -180,6 +183,8 @@ export default function Page() {
           });
         }
 
+        setIspending(false);
+
         // await addDataToDatore(data);
       };
     }
@@ -187,6 +192,7 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileAnagraficaLavoro = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -341,6 +347,8 @@ export default function Page() {
         }
       };
     }
+
+    setIspending(false);
   };
 
   // Funzione per trasformare i dati
@@ -357,6 +365,7 @@ export default function Page() {
 
   // @ts-ignore
   const handleFileTelefono = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -400,10 +409,12 @@ export default function Page() {
         }
       };
     }
+    setIspending(false);
   };
 
   // @ts-ignore
   const handleFileSCP = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -452,10 +463,12 @@ export default function Page() {
         }
       };
     }
+    setIspending(false);
   };
 
   // @ts-ignore
   const handleFileABICAB = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -516,10 +529,12 @@ export default function Page() {
         }
       };
     }
+    setIspending(false);
   };
 
   // @ts-ignore
   const handleFileCC = (e) => {
+    setIspending(true);
     // console.log(e);
     const file = e.target.files[0];
     // console.log(file);
@@ -565,83 +580,89 @@ export default function Page() {
         }
       };
     }
+    setIspending(false);
   };
 
   return (
-    <div className="h-full w-full flex flex-col gap-y-8">
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload Anagrafica</h3>
-        <input
-          type="file"
-          name="fileAnagrafica"
-          id="fileAnagrafica"
-          accept=".xlsx, .xls"
-          onChange={handleFileAnagrafica}
-          ref={fileRefAnagrafica}
-          className="text-white"
-        />
-      </div>
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
-        <input
-          type="file"
-          name="fileAnagrafica"
-          id="fileAnagrafica"
-          accept=".xlsx, .xls"
-          onChange={handleFileAnagraficaLavoro}
-          ref={fileRefAnagraficaLavoro}
-          className="text-white"
-        />
-      </div>
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload Telefono</h3>
-        <input
-          type="file"
-          name="fileTelefono"
-          id="fileTelefono"
-          accept=".xlsx, .xls"
-          onChange={handleFileTelefono}
-          ref={fileRefTelefono}
-          className="text-white"
-        />
-      </div>
+    <>
+      {isPending && <LoadingSpinner />}
+      <div className="h-full w-full flex flex-col gap-y-8">
+        <div>
+          <h3 className="text-white text-xl font-semibold">
+            Upload Anagrafica
+          </h3>
+          <input
+            type="file"
+            name="fileAnagrafica"
+            id="fileAnagrafica"
+            accept=".xlsx, .xls"
+            onChange={handleFileAnagrafica}
+            ref={fileRefAnagrafica}
+            className="text-white"
+          />
+        </div>
+        <div>
+          <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
+          <input
+            type="file"
+            name="fileAnagrafica"
+            id="fileAnagrafica"
+            accept=".xlsx, .xls"
+            onChange={handleFileAnagraficaLavoro}
+            ref={fileRefAnagraficaLavoro}
+            className="text-white"
+          />
+        </div>
+        <div>
+          <h3 className="text-white text-xl font-semibold">Upload Telefono</h3>
+          <input
+            type="file"
+            name="fileTelefono"
+            id="fileTelefono"
+            accept=".xlsx, .xls"
+            onChange={handleFileTelefono}
+            ref={fileRefTelefono}
+            className="text-white"
+          />
+        </div>
 
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload SCP</h3>
-        <input
-          type="file"
-          name="fileSCP"
-          id="fileSCP"
-          accept=".xlsx, .xls"
-          onChange={handleFileSCP}
-          ref={fileRefSCP}
-          className="text-white"
-        />
+        <div>
+          <h3 className="text-white text-xl font-semibold">Upload SCP</h3>
+          <input
+            type="file"
+            name="fileSCP"
+            id="fileSCP"
+            accept=".xlsx, .xls"
+            onChange={handleFileSCP}
+            ref={fileRefSCP}
+            className="text-white"
+          />
+        </div>
+        <div>
+          <h3 className="text-white text-xl font-semibold">Upload ABI CAB</h3>
+          <input
+            type="file"
+            name="fileABICAB"
+            id="fileABICAB"
+            accept=".xlsx, .xls"
+            onChange={handleFileABICAB}
+            ref={fileRefABICAB}
+            className="text-white"
+          />
+        </div>
+        <div>
+          <h3 className="text-white text-xl font-semibold">Upload CC</h3>
+          <input
+            type="file"
+            name="fileCC"
+            id="fileCC"
+            accept=".xlsx, .xls"
+            onChange={handleFileCC}
+            ref={fileReCC}
+            className="text-white"
+          />
+        </div>
       </div>
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload ABI CAB</h3>
-        <input
-          type="file"
-          name="fileABICAB"
-          id="fileABICAB"
-          accept=".xlsx, .xls"
-          onChange={handleFileABICAB}
-          ref={fileRefABICAB}
-          className="text-white"
-        />
-      </div>
-      <div>
-        <h3 className="text-white text-xl font-semibold">Upload CC</h3>
-        <input
-          type="file"
-          name="fileCC"
-          id="fileCC"
-          accept=".xlsx, .xls"
-          onChange={handleFileCC}
-          ref={fileReCC}
-          className="text-white"
-        />
-      </div>
-    </div>
+    </>
   );
 }
