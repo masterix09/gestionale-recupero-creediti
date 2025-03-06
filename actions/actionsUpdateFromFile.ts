@@ -40,68 +40,94 @@ export async function addDataToDatore(data: TData[]) {
   try {
     console.log("Inizio elaborazione di ", data.length, " persone");
 
-    const results = await Promise.all(
-      data.flatMap((persona) =>
-        persona.datore.map(async (datore) => {
-          try {
-            const {
-              cap,
+    const recordsToCreate = [];
+    const recordsToUpdate = [];
+
+    for (const persona of data) {
+      for (const datore of persona.datore) {
+        const {
+          cap,
+          comune,
+          fine,
+          inizio,
+          mese,
+          nome,
+          partTime,
+          piva,
+          provincia,
+          ragioneSociale,
+          reddito,
+          tipo,
+          via,
+          cfPersona,
+          cfdatore,
+        } = datore;
+
+        // Verifica se il record esiste già
+        const existingRecord = await prisma.datore.findFirst({
+          where: {
+            personaID: cfPersona,
+            CF: cfdatore,
+          },
+        });
+
+        if (existingRecord) {
+          // Se il record esiste, aggiungilo all'array di aggiornamento
+          recordsToUpdate.push({
+            where: { id: existingRecord.id },
+            data: {
+              cap: cap?.toString() ?? "",
               comune,
               fine,
               inizio,
-              mese,
+              mese: mese?.toString() ?? "",
               nome,
-              partTime,
-              piva,
+              PIVA: piva?.toString(),
               provincia,
-              ragioneSociale,
-              reddito,
+              ragione_sociale: ragioneSociale?.toString(),
+              reddito: reddito?.toString() ?? "",
               tipo,
+              tipologia_contratto: partTime?.toString(),
               via,
-              cfPersona,
-              cfdatore,
-            } = datore;
+            },
+          });
+        } else {
+          // Se il record non esiste, aggiungilo all'array di creazione
+          recordsToCreate.push({
+            id: uuid_v4(),
+            cap: cap?.toString() ?? "",
+            CF: cfdatore?.toString() ?? "",
+            comune,
+            fine,
+            inizio,
+            mese: mese?.toString() ?? "",
+            nome,
+            PIVA: piva?.toString(),
+            provincia,
+            ragione_sociale: ragioneSociale?.toString(),
+            reddito: reddito?.toString() ?? "",
+            tipo,
+            tipologia_contratto: partTime?.toString(),
+            via,
+            personaID: cfPersona,
+          });
+        }
+      }
+    }
 
-            await prisma.datore.create({
-              data: {
-                id: uuid_v4(),
-                cap: cap.toString() ?? "",
-                CF: cfdatore ?? "",
-                comune,
-                fine,
-                inizio,
-                mese: mese?.toString() ?? "",
-                nome,
-                PIVA: piva,
-                provincia,
-                ragione_sociale: ragioneSociale,
-                reddito: reddito?.toString() ?? "",
-                tipo,
-                tipologia_contratto: partTime,
-                via,
-                personaID: cfPersona ?? "",
-              },
-            });
+    // Esegui le operazioni di creazione e aggiornamento in batch
+    if (recordsToCreate.length > 0) {
+      await prisma.datore.createMany({
+        data: recordsToCreate,
+      });
+      console.log("Creati ", recordsToCreate.length, " datori");
+    }
 
-            console.log("Datore creato per persona con CF: ", persona.CF);
-            return { success: true };
-          } catch (innerError) {
-            console.error(
-              "Errore durante la creazione del datore per persona con CF: ",
-              persona.CF,
-              innerError
-            );
-            return { success: false, error: innerError };
-          }
-        })
-      )
-    );
-
-    const hasErrors = results.some((result) => !result.success);
-
-    if (hasErrors) {
-      console.error("Elaborazione completata con errori");
-      return "error";
+    if (recordsToUpdate.length > 0) {
+      for (const updateData of recordsToUpdate) {
+        await prisma.datore.update(updateData);
+      }
+      console.log("Aggiornati ", recordsToUpdate.length, " datori");
     }
 
     console.log("Elaborazione completata con successo");
@@ -119,10 +145,12 @@ export async function updateProcessFile(data: TData[]) {
     const results = await Promise.all(
       data.map(async (item) => {
         try {
-          const newBirthDate = item.data_nascita.slice(
-            1,
-            item.data_nascita.length
-          );
+          const newBirthDate = item.data_nascita
+            .toString()
+            .slice(0, item.data_nascita.length);
+          const newDieDate = item.data_morte
+            .toString()
+            .slice(0, item.data_morte.length);
 
           const persona = await prisma.persona.findFirst({
             where: {
@@ -135,20 +163,20 @@ export async function updateProcessFile(data: TData[]) {
               CF: item.CF,
             },
             create: {
-              id: item.CF,
+              id: item.CF.toString(),
               cap: [item.cap.toString()],
               cognome: item.cognome,
               comune: [item.comune],
               comune_nascita: item.comune_nascita,
-              data_morte: item.data_morte,
+              data_morte: newDieDate.toString(),
               data_nascita: newBirthDate.toString(),
-              nome: item.nome,
-              PIVA: item.PIVA,
+              nome: item.nome.toString(),
+              PIVA: item.PIVA.toString(),
               provincia: [item.provincia],
               provincia_nascita: item.provincia_nascita,
               sesso: item.sesso,
               via: [item.via],
-              CF: item.CF,
+              CF: item.CF.toString(),
             },
             update: {
               cap: persona?.cap.includes(item.cap.toString())
@@ -159,10 +187,10 @@ export async function updateProcessFile(data: TData[]) {
                 ? persona.comune
                 : [...(persona?.comune || []), item.comune.toString()],
               comune_nascita: item.comune_nascita,
-              data_morte: item.data_morte,
+              data_morte: newDieDate.toString(),
               data_nascita: newBirthDate.toString(),
               nome: item.nome,
-              PIVA: item.PIVA,
+              PIVA: item.PIVA.toString(),
               provincia: persona?.provincia.includes(item.provincia.toString())
                 ? persona.provincia
                 : [...(persona?.provincia || []), item.provincia.toString()],
@@ -458,6 +486,8 @@ export async function updateProcessFileABICAB(
             },
           });
 
+          console.log("datore ID =>", datore?.id);
+
           const persona = datore
             ? null
             : await prisma.persona.findFirst({
@@ -465,6 +495,14 @@ export async function updateProcessFileABICAB(
                   CF: item.CF,
                 },
               });
+
+          console.log("persona ID =>", persona?.id);
+          console.log(
+            "ABICAB datore ID =>",
+            datore?.id
+              ? datore.id
+              : persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77"
+          );
 
           await prisma.abiCab.upsert({
             where: {
@@ -507,10 +545,9 @@ export async function updateProcessFileABICAB(
                 item.CAB_1?.toString(),
                 item.CAB_2?.toString(),
               ],
-              datoreID:
-                datore?.id ??
-                persona?.id ??
-                "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
+              datoreID: datore?.id
+                ? datore.id
+                : persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77",
               id: item.CF,
             },
           });
@@ -548,21 +585,43 @@ export async function uploadCCFile(
   try {
     console.log("Inizio upload conti correnti per ", data.length, " record");
 
-    const dataUpload: {
-      banca: string;
-      CF: string;
-      id: string;
-      nome: string;
-    }[] = data.map((item) => ({
-      banca: item.banca,
-      CF: item.CF,
-      nome: item.nome,
-      id: uuid_v4(),
-    }));
+    const recordsToCreate = [];
 
-    await prisma.contoCorrente.createMany({
-      data: dataUpload,
-    });
+    for (const item of data) {
+      // Verifica se il record esiste già
+      const existingRecord = await prisma.contoCorrente.findFirst({
+        where: {
+          CF: item.CF,
+          banca: item.banca,
+        },
+      });
+
+      if (!existingRecord) {
+        // Se il record non esiste, aggiungilo all'array
+        recordsToCreate.push({
+          id: uuid_v4(),
+          banca: item.banca,
+          CF: item.CF,
+          nome: item.nome,
+        });
+      } else {
+        console.log(
+          "Conto corrente già esistente per CF: ",
+          item.CF,
+          ", Banca: ",
+          item.banca
+        );
+      }
+    }
+
+    if (recordsToCreate.length > 0) {
+      await prisma.contoCorrente.createMany({
+        data: recordsToCreate,
+      });
+      console.log("Creati ", recordsToCreate.length, " conti correnti");
+    } else {
+      console.log("Nessun conto corrente da creare.");
+    }
 
     console.log("Upload conti correnti completato con successo");
     return "OK";
