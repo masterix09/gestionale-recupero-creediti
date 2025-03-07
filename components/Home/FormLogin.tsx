@@ -25,7 +25,7 @@ const FormLogin = () => {
               action={async (formData) => {
                 setErrorMessage(null);
                 try {
-                  await login(formData); // Usa l'azione server importata
+                  await signIn("credentials", formData);
                   console.log("Login riuscito");
                 } catch (error: any) {
                   console.log("Login fallito");
