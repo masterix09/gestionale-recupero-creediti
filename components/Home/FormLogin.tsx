@@ -25,7 +25,7 @@ const FormLogin = () => {
               action={async (formData) => {
                 setErrorMessage(null);
                 try {
-                  await signIn("credentials", formData);
+                  await login(formData);
                   console.log("Login riuscito");
                 } catch (error: any) {
                   console.log("Login fallito");

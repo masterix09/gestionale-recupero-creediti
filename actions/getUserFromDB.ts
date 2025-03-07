@@ -47,14 +47,9 @@ export const getRoleFromId = async (id: string) => {
 
 export async function login(formData: FormData) {
   try {
-    await signIn("credentials", {
-      username: formData.get("email"),
-      password: formData.get("password"),
-      redirect: true,
-      redirectTo: process.env.NEXTAUTH_URL ?? "/",
-    });
+    await signIn("credentials", formData);
   } catch (error: any) {
-    console.error("Errore durante il login:", error);
+    console.error("Errore durante il login");
     throw error; // Rilancia l'errore per gestirlo nel componente
   }
 }

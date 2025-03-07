@@ -25,8 +25,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials.password as string
         );
 
-        console.log("Risultato checkUser:", user); // Log
-
         if (!user) {
           // No user found, so this is their first attempt to login
           // meaning this is also the place you could do registration
@@ -34,7 +32,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // return user object with the their profile data
-        console.log("Autorizzazione completata:", user); // Log
+        console.log("Autorizzazione completata"); // Log
         return user;
       },
     }),
