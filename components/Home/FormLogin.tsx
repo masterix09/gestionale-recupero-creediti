@@ -13,7 +13,10 @@ const FormLogin = () => {
             action={async (formData) => {
               "use server";
               try {
-                await signIn("credentials", formData);
+                await signIn("credentials", {
+                  redirectTo: "/",
+                  values: formData,
+                });
               } catch (error) {
                 // console.log(error);
               }

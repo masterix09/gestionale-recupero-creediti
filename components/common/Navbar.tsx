@@ -34,8 +34,8 @@ const Navbar = async () => {
             <form
               action={async () => {
                 "use server";
-                await signOut();
-                redirect("/", RedirectType.replace);
+                await signOut({ redirectTo: "/" });
+                // redirect("/", RedirectType.replace);
               }}
             >
               <Button
