@@ -51,7 +51,7 @@ export async function login(formData: FormData) {
       username: formData.get("email"),
       password: formData.get("password"),
       redirect: true,
-      redirectTo: "/",
+      redirectTo: process.env.NEXTAUTH_URL ?? "/",
     });
   } catch (error: any) {
     console.error("Errore durante il login:", error);
