@@ -28,21 +28,21 @@ export default async function Page({ params }: { params: { id: string } }) {
           <TableHeader>
             <TableRow className="bg-red-800 group hover:bg-red-300">
               <TableHead className="text-white group-hover:text-black group-hover:font-bold">
-                Data
-              </TableHead>
-              <TableHead className="text-white group-hover:text-black group-hover:font-bold">
-                Banca
+                CF
               </TableHead>
               <TableHead className="text-white group-hover:text-black group-hover:font-bold">
                 Nome
+              </TableHead>
+              <TableHead className="text-white group-hover:text-black group-hover:font-bold">
+                Banca
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             <TableRow>
-              <TableCell className="text-white">{data?.banca}</TableCell>
-              <TableCell className="text-white">{data?.nome}</TableCell>
               <TableCell className="text-white">{data?.CF}</TableCell>
+              <TableCell className="text-white">{data?.nome}</TableCell>
+              <TableCell className="text-white">{data?.banca}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
