@@ -50,5 +50,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.id = token.id;
       return session;
     },
+    redirect() {
+      return "/";
+    },
   },
 });
