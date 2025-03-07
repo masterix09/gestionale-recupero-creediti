@@ -24,7 +24,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           credentials.email as string,
           credentials.password as string
         );
-        // console.log(user)
+
+        console.log("Risultato checkUser:", user); // Log
 
         if (!user) {
           // No user found, so this is their first attempt to login
@@ -33,20 +34,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
 
         // return user object with the their profile data
+        console.log("Autorizzazione completata:", user); // Log
         return user;
       },
     }),
   ],
-  // callbacks: {
-  //   jwt({ token, user }) {
-  //     if(user) token.role = user.email === "amministrazione@admin.it" ? "admin" : "user"
-  //     return token
-  //   },
-  //   session({ session, token }) {
-  //     session.user.role = token.email === "amministrazione@admin.it" ? "admin" : "user"
-  //     return session
-  //   }
-  // }
   callbacks: {
     jwt({ token, user }) {
       if (user) {

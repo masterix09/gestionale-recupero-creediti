@@ -1,5 +1,6 @@
 "use server";
 
+import { signIn } from "@/lib/auth";
 import prisma from "@/lib/db";
 
 export default async function checkUser(email: string, password: string) {
@@ -43,3 +44,12 @@ export const getRoleFromId = async (id: string) => {
     },
   });
 };
+
+export async function login(formData: FormData) {
+  try {
+    await signIn("credentials", formData);
+  } catch (error: any) {
+    console.error("Errore durante il login:", error);
+    throw error; // Rilancia l'errore per gestirlo nel componente
+  }
+}

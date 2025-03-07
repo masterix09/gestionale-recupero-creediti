@@ -10,7 +10,7 @@ const ButtonLoading = ({ title }: { title: string }) => {
       disabled={pending}
       className="rounded-xl py-3 w-[80%] mx-auto bg-red-800 text-white font-semibold uppercase text-xl"
     >
-      {title}
+      {pending ? "Loading..." : title}
     </Button>
   );
 };
