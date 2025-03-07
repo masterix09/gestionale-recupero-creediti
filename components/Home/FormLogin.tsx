@@ -29,7 +29,7 @@ const FormLogin = () => {
                   console.log("Login riuscito");
                 } catch (error: any) {
                   console.log("Login fallito");
-                  setErrorMessage("Errore di login");
+                  setErrorMessage("Errore! Credenziali errate, riprova.");
                 }
               }}
               className="w-full flex flex-col gap-y-4 p-3"
