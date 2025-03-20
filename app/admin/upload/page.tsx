@@ -241,9 +241,9 @@ export default function Page() {
 
           const data = blockData.map((row: any[]) => {
             const CF = row[0] as string;
-            const PIVA = row[1] as string;
-            const nome = row[3] as string;
-            const cognome = row[4] as string;
+            const PIVA = row[2] as string;
+            const nome = row[4] as string;
+            const cognome = row[3] as string;
             const sesso = row[5] as string;
             const comune_nascita = row[7] as string;
             const provincia_nascita = row[6] as string;
