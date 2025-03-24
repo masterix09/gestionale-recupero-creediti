@@ -9,11 +9,11 @@ import { useFormState } from "react-dom";
 const FormRicerca = () => {
   const [state, formAction] = useFormState(useGetEntity, [
     {
-      id: "string",
-      CF: "string",
-      PIVA: "string",
-      nome: "string",
-      cognome: "string",
+      id: "",
+      CF: "",
+      PIVA: "",
+      nome: "",
+      cognome: "",
     },
   ]);
   return (
@@ -35,7 +35,9 @@ const FormRicerca = () => {
           <ButtonLoading title="CERCA" />
         </form>
       </div>
-      <DataTable columns={columns} data={state ?? []} />
+      {state.length > 0 && state.at(0)?.id !== "" && (
+        <DataTable columns={columns} data={state ?? []} />
+      )}
     </div>
   );
 };

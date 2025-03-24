@@ -38,6 +38,32 @@ type TData = {
   }[];
 };
 
+interface TelefonoInput {
+  CF: string;
+  Tel1: string;
+  Tel2: string;
+  Tel3: string;
+  Tel4: string;
+  Tel5: string;
+  Tel6: string;
+}
+
+type PersonaInput = {
+  CF: string; // Codice Fiscale (usato anche come ID)
+  PIVA: string; // Partita IVA
+  Nome: string; // Cognome o Ragione Sociale
+  CognomeRagioneSociale: string; // Cognome o Ragione Sociale
+  Sesso: string; // Sesso
+  ProvinciaNascita: string; // Provincia di nascita
+  ComuneNascita: string; // Comune di nascita
+  DataNascita: string; // Data di nascita (come stringa, formato ISO)
+  DataMorte: string; // Data di morte (come stringa, formato ISO)
+  Via: string; // Via (o un elenco di vie, separato da virgole)
+  Cap: string; // CAP (o un elenco di CAP, separato da virgole)
+  Comune: string; // Comune (o un elenco di comuni, separato da virgole)
+  Provincia: string; // Provincia (o un elenco di province, separato da virgole)
+};
+
 export async function addDataToDatore(data: TData[]) {
   try {
     console.log("Inizio elaborazione di ", data.length, " persone");
@@ -142,89 +168,120 @@ export async function addDataToDatore(data: TData[]) {
   }
 }
 
+// funziona bene
 // export async function updateProcessFile(data: TData[]) {
 //   try {
 //     console.log("Inizio elaborazione di ", data.length, " record");
 
-//     const results = await Promise.all(
-//       data.map(async (item) => {
-//         try {
-//           const newBirthDate = item.data_nascita
-//             .toString()
-//             .slice(0, item.data_nascita.length);
-//           const newDieDate = item.data_morte
-//             .toString()
-//             .slice(0, item.data_morte.length);
+//     const cfs = data.map((item) => item.CF);
 
-//           const persona = await prisma.persona.findFirst({
-//             where: {
-//               CF: item.CF,
-//             },
-//           });
+//     const personeEsistenti = await prisma.persona.findMany({
+//       where: {
+//         CF: {
+//           in: cfs,
+//         },
+//       },
+//     });
 
-//           await prisma.persona.upsert({
-//             where: {
-//               CF: item.CF,
-//             },
-//             create: {
-//               id: item.CF.toString(),
-//               cap: [item.cap.toString()],
-//               cognome: item.cognome,
-//               comune: [item.comune],
-//               comune_nascita: item.comune_nascita,
-//               data_morte: newDieDate.toString(),
-//               data_nascita: newBirthDate.toString(),
-//               nome: item.nome.toString(),
-//               PIVA: item.PIVA.toString(),
-//               provincia: [item.provincia],
-//               provincia_nascita: item.provincia_nascita,
-//               sesso: item.sesso,
-//               via: [item.via],
-//               CF: item.CF.toString(),
-//             },
-//             update: {
-//               cap: persona?.cap.includes(item.cap.toString())
-//                 ? persona.cap
-//                 : [...(persona?.cap || []), item.cap.toString()],
-//               cognome: item.cognome,
-//               comune: persona?.comune.includes(item.comune.toString())
-//                 ? persona.comune
-//                 : [...(persona?.comune || []), item.comune.toString()],
-//               comune_nascita: item.comune_nascita,
-//               data_morte: newDieDate.toString(),
-//               data_nascita: newBirthDate.toString(),
-//               nome: item.nome,
-//               PIVA: item.PIVA.toString(),
-//               provincia: persona?.provincia.includes(item.provincia.toString())
-//                 ? persona.provincia
-//                 : [...(persona?.provincia || []), item.provincia.toString()],
-//               provincia_nascita: item.provincia_nascita,
-//               sesso: item.sesso,
-//               via: persona?.via.includes(item.via.toString())
-//                 ? persona.via
-//                 : [...(persona?.via || []), item.via.toString()],
-//             },
-//           });
-
-//           console.log("Upsert completato per CF: ", item.CF);
-//           return { success: true };
-//         } catch (innerError) {
-//           console.error(
-//             "Errore durante l'elaborazione del record con CF: ",
-//             item.CF,
-//             innerError
-//           );
-//           return { success: false, error: innerError };
-//         }
-//       })
+//     const personeEsistentiMap = new Map(
+//       personeEsistenti.map((persona) => [persona.CF, persona])
 //     );
 
-//     const hasErrors = results.some((result) => !result.success);
+//     console.log("personeEsistentiMap => ", personeEsistentiMap);
 
-//     if (hasErrors) {
-//       console.error("Elaborazione completata con errori");
-//       return "error";
+//     const createData: Prisma.PersonaCreateManyInput[] = [];
+//     const updateData: {
+//       where: { CF: string };
+//       data: Prisma.PersonaUpdateInput;
+//     }[] = [];
+
+//     for (const item of data) {
+//       const newBirthDate = item.data_nascita.toString();
+//       const newDieDate = item.data_morte.toString();
+
+//       if (personeEsistentiMap.has(item.CF)) {
+//         // Aggiornamento
+//         const personaEsistente = personeEsistentiMap.get(item.CF);
+
+//         if (personaEsistente) {
+//           const updatedCap = personaEsistente.cap.includes(item.cap)
+//             ? personaEsistente.cap
+//             : [...personaEsistente.cap, item.cap];
+//           const updatedComune = personaEsistente.comune.includes(item.comune)
+//             ? personaEsistente.comune
+//             : [...personaEsistente.comune, item.comune];
+//           const updatedProvincia = personaEsistente.provincia.includes(
+//             item.provincia
+//           )
+//             ? personaEsistente.provincia
+//             : [...personaEsistente.provincia, item.provincia];
+//           const updatedVia = personaEsistente.via.includes(item.via)
+//             ? personaEsistente.via
+//             : [...personaEsistente.via, item.via];
+
+//           updateData.push({
+//             where: { CF: item.CF },
+//             data: {
+//               cap: updatedCap,
+//               comune: updatedComune,
+//               provincia: updatedProvincia,
+//               via: updatedVia,
+//               cognome: item.cognome,
+//               comune_nascita: item.comune_nascita,
+//               data_morte: newDieDate,
+//               data_nascita: newBirthDate,
+//               nome: item.nome,
+//               PIVA: item.PIVA,
+//               provincia_nascita: item.provincia_nascita,
+//               sesso: item.sesso,
+//             },
+//           });
+//         }
+//       } else {
+//         console.log("item create => ", item.CF);
+//         // Creazione
+//         createData.push({
+//           id: item.CF,
+//           cap: [item.cap],
+//           cognome: item.cognome,
+//           comune: [item.comune],
+//           comune_nascita: item.comune_nascita,
+//           data_morte: newDieDate,
+//           data_nascita: newBirthDate,
+//           nome: item.nome,
+//           PIVA: item.PIVA,
+//           provincia: [item.provincia],
+//           provincia_nascita: item.provincia_nascita,
+//           sesso: item.sesso,
+//           via: [item.via],
+//           CF: item.CF,
+//         });
+//       }
 //     }
+
+//     // Esegui updateMany se ci sono dati da aggiornare
+//     if (updateData.length > 0) {
+//       for (const updateItem of updateData) {
+//         await prisma.persona.update({
+//           where: updateItem.where,
+//           data: updateItem.data,
+//         });
+//       }
+//       console.log("updateMany completato per ", updateData.length, " record");
+//     }
+
+//     console.log("createData => ", createData);
+
+//     // Esegui createMany se ci sono dati da creare
+//     if (createData.length > 0) {
+//       await prisma.persona.createMany({
+//         data: createData,
+//       });
+//       console.log("createMany completato per ", createData.length, " record");
+//     }
+
+//     console.log("update [0] => ", updateData.at(0));
+//     console.log("update");
 
 //     revalidatePath(`/category/anagrafica`);
 //     console.log("Elaborazione completata con successo");
@@ -235,177 +292,264 @@ export async function addDataToDatore(data: TData[]) {
 //   }
 // }
 
-export async function updateProcessFile(data: TData[]) {
+export async function importaPersone(personeInput: PersonaInput[]) {
   try {
-    console.log("Inizio elaborazione di ", data.length, " record");
+    // Suddividi i record in blocchi da 100
+    const batchSize = 100;
+    const batches = [];
 
-    // Ottieni tutti i CF dai dati in input
-    const cfs = data.map((item) => item.CF);
+    // Suddividi i dati in batch
+    for (let i = 0; i < personeInput.length; i += batchSize) {
+      batches.push(personeInput.slice(i, i + batchSize));
+    }
 
-    // Esegui una query batch per recuperare tutte le persone esistenti
-    const personeEsistenti = await prisma.persona.findMany({
-      where: {
-        CF: {
-          in: cfs,
+    // Esegui ogni batch come una transazione separata
+    for (const batch of batches) {
+      await prisma.$transaction(
+        async (prisma) => {
+          // Imposta il timeout delle transazioni
+          await prisma.$executeRaw`SET statement_timeout = 30000;`; // Impostato a 30 secondi
+
+          // 1. Estrai tutti i CF unici dal file Excel per il batch corrente
+          const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
+
+          // 2. Ottieni tutte le persone esistenti nel DB per il batch
+          const personeEsistenti = await prisma.persona.findMany({
+            where: {
+              CF: { in: cfUnici },
+            },
+          });
+
+          // 3. Organizza le operazioni di creazione e aggiornamento
+          const personeDaCreare = [];
+          const personeDaAggiornare = [];
+
+          for (const personaInput of batch) {
+            // Verifica se la persona esiste
+            const personaEsistente = personeEsistenti.find(
+              (p) => p.CF === personaInput.CF
+            );
+
+            const personaData = {
+              id: personaInput.CF, // Aggiunto campo id uguale al CF
+              CF: personaInput.CF,
+              PIVA: personaInput.PIVA.toString(),
+              cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
+              nome: personaInput.Nome.toString(), // nome della società
+              sesso: personaInput.Sesso.toString(),
+              comune_nascita: personaInput.ComuneNascita.toString(),
+              provincia_nascita: personaInput.ProvinciaNascita.toString(),
+              data_nascita: personaInput.DataNascita.toString(),
+              data_morte: personaInput.DataMorte.toString(),
+              via: personaEsistente
+                ? personaEsistente?.via?.length > 0
+                  ? personaEsistente.via.at(personaEsistente.via.length) ===
+                    personaInput.Via.toString()
+                    ? personaEsistente.via
+                    : [...personaEsistente?.via, personaInput.Via.toString()]
+                  : [personaInput.Via.toString()]
+                : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
+              cap: personaEsistente
+                ? personaEsistente?.cap?.length > 0
+                  ? personaEsistente.cap.at(personaEsistente.cap.length) ===
+                    personaInput.Cap.toString()
+                    ? personaEsistente.cap
+                    : [...personaEsistente?.cap, personaInput.Cap.toString()]
+                  : [personaInput.Cap.toString()]
+                : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
+              comune: personaEsistente
+                ? personaEsistente?.comune?.length > 0
+                  ? personaEsistente.comune.at(
+                      personaEsistente.comune.length
+                    ) === personaInput.Comune.toString()
+                    ? personaEsistente.comune
+                    : [
+                        ...personaEsistente?.comune,
+                        personaInput.Comune.toString(),
+                      ]
+                  : [personaInput.Comune.toString()]
+                : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
+              provincia: personaEsistente
+                ? personaEsistente?.provincia?.length > 0
+                  ? personaEsistente.provincia.at(
+                      personaEsistente.provincia.length
+                    ) === personaInput.Provincia.toString()
+                    ? personaEsistente.provincia
+                    : [
+                        ...personaEsistente?.provincia,
+                        personaInput.Provincia.toString(),
+                      ]
+                  : [personaInput.Provincia.toString()]
+                : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+            };
+
+            if (personaEsistente) {
+              // 4. Se la persona esiste, aggiungiamo l'operazione di aggiornamento
+              personeDaAggiornare.push({
+                where: { CF: personaInput.CF },
+                data: personaData,
+              });
+            } else {
+              // 5. Se la persona non esiste, la aggiungiamo all'elenco di creazione
+              personeDaCreare.push(personaData);
+            }
+          }
+
+          // 6. Esegui le operazioni di creazione in batch
+          if (personeDaCreare.length > 0) {
+            await prisma.persona.createMany({ data: personeDaCreare });
+          }
+
+          // 7. Esegui gli aggiornamenti in batch
+          if (personeDaAggiornare.length > 0) {
+            await Promise.all(
+              personeDaAggiornare.map((updateData) =>
+                prisma.persona.update({
+                  where: updateData.where,
+                  data: updateData.data,
+                })
+              )
+            );
+          }
         },
-      },
-    });
-
-    // Crea una mappa di controllo per le persone esistenti
-    const personeEsistentiMap = new Map(
-      personeEsistenti.map((persona) => [persona.CF, persona])
-    );
-
-    const createData: Prisma.PersonaCreateManyInput[] = [];
-    const updateData: Prisma.PersonaUpdateArgs[] = [];
-
-    for (const item of data) {
-      const newBirthDate = item.data_nascita.toString();
-      const newDieDate = item.data_morte.toString();
-
-      if (personeEsistentiMap.has(item.CF)) {
-        // Aggiornamento
-        updateData.push({
-          where: { CF: item.CF },
-          data: {
-            cap: { push: item.cap },
-            comune: { push: item.comune },
-            provincia: { push: item.provincia },
-            via: { push: item.via },
-            cognome: item.cognome,
-            comune_nascita: item.comune_nascita,
-            data_morte: newDieDate,
-            data_nascita: newBirthDate,
-            nome: item.nome,
-            PIVA: item.PIVA,
-            provincia_nascita: item.provincia_nascita,
-            sesso: item.sesso,
-          },
-        });
-      } else {
-        // Creazione
-        createData.push({
-          id: item.CF,
-          cap: [item.cap],
-          cognome: item.cognome,
-          comune: [item.comune],
-          comune_nascita: item.comune_nascita,
-          data_morte: newDieDate,
-          data_nascita: newBirthDate,
-          nome: item.nome,
-          PIVA: item.PIVA,
-          provincia: [item.provincia],
-          provincia_nascita: item.provincia_nascita,
-          sesso: item.sesso,
-          via: [item.via],
-          CF: item.CF,
-        });
-      }
+        { timeout: 30000 }
+      );
     }
 
-    // Esegui updateMany se ci sono dati da aggiornare
-    if (updateData.length > 0) {
-      await prisma.persona.updateMany({
-        data: updateData.map((update) => update.data),
-        where: {
-          OR: updateData.map((update) => ({ CF: update.where.CF })),
-        },
-      });
-      console.log("updateMany completato per ", updateData.length, " record");
-    }
-
-    // Esegui createMany se ci sono dati da creare
-    if (createData.length > 0) {
-      await prisma.persona.createMany({
-        data: createData,
-      });
-      console.log("createMany completato per ", createData.length, " record");
-    }
-
-    revalidatePath(`/category/anagrafica`);
-    console.log("Elaborazione completata con successo");
     return "OK";
   } catch (error) {
-    console.error("Errore generale durante l'elaborazione: ", error);
-    return "error";
+    console.error("Errore durante l'importazione delle persone:", error);
+    return "errore";
   }
 }
 
-export async function updateProcessFileTelefono(
-  data: { CF: string; Tel: string[] }[]
-) {
+export async function importaTelefoni(personeInput: TelefonoInput[]) {
   try {
-    console.log("Inizio elaborazione telefoni per ", data.length, " persone");
+    const batchSize = 300; // Per evitare timeout
+    const chunks = chunkArray(personeInput, batchSize);
 
-    const results = await Promise.all(
-      data.flatMap((item) => {
-        return item.Tel.map(async (element) => {
-          try {
-            if (element !== "") {
-              const idPersona = await prisma.persona.findFirst({
-                where: {
-                  CF: item.CF,
-                },
-                select: {
-                  id: true,
-                },
-              });
+    for (const batch of chunks) {
+      await prisma.$transaction(async (prisma) => {
+        // 1️⃣ Ottieni tutti i CF unici nel batch
+        const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
 
-              await prisma.telefono.upsert({
-                where: {
-                  id: element.toString(),
-                },
-                create: {
-                  id: element.toString(),
-                  value: element.toString(),
-                  personaID: idPersona?.id ?? "",
-                },
-                update: {
-                  id: element.toString(),
-                  value: element.toString(),
-                  personaID: idPersona?.id ?? "",
-                },
-              });
-              console.log(
-                "Telefono aggiornato per CF: ",
-                item.CF,
-                ", Tel: ",
-                element
-              );
-              return { success: true };
-            }
-            return { success: true }; // Se element è vuoto, considera come successo
-          } catch (innerError) {
-            console.error(
-              "Errore durante l'aggiornamento del telefono per CF: ",
-              item.CF,
-              ", Tel: ",
-              element,
-              innerError
-            );
-            return { success: false, error: innerError };
-          }
+        // 2️⃣ Trova solo le persone esistenti nel database
+        const personeEsistenti = await prisma.persona.findMany({
+          where: { CF: { in: cfUnici } },
+          select: { id: true, CF: true },
         });
-      })
-    );
 
-    const hasErrors = results.some((result) => !result.success);
+        // Crea una mappa di CF -> ID Persona
+        const personaIdMap = new Map(personeEsistenti.map((p) => [p.CF, p.id]));
 
-    if (hasErrors) {
-      console.error("Elaborazione telefoni completata con errori");
-      return "error";
+        // 3️⃣ Trova tutti i telefoni esistenti per queste persone
+        const personaIds = Array.from(personaIdMap.values());
+        const telefoniEsistenti = await prisma.telefono.findMany({
+          where: { personaID: { in: personaIds } },
+          select: { id: true, value: true, personaID: true },
+        });
+
+        // Crea una mappa di personaID -> [Telefoni esistenti]
+        const telefoniEsistentiMap = new Map<
+          string,
+          { id: string; value: string }[]
+        >();
+        telefoniEsistenti.forEach((t) => {
+          if (!telefoniEsistentiMap.has(t.personaID!)) {
+            telefoniEsistentiMap.set(t.personaID!, []);
+          }
+          telefoniEsistentiMap.get(t.personaID!)!.push(t);
+        });
+
+        // 4️⃣ Prepara i dati per l'update e la creazione dei telefoni
+        const telefoniDaCreare: Prisma.TelefonoCreateManyInput[] = [];
+        const telefoniDaAggiornare: { id: string; value: string }[] = [];
+        const telefoniDaEliminare: string[] = [];
+
+        for (const persona of batch) {
+          const personaID = personaIdMap.get(persona.CF);
+          if (!personaID) {
+            // Se la persona non esiste, ignora i suoi telefoni
+            console.warn(
+              `Persona con CF ${persona.CF} non trovata, ignorando i telefoni`
+            );
+            continue;
+          }
+
+          // Telefoni presenti nel file
+          const nuoviNumeri = [
+            persona.Tel1,
+            persona.Tel2,
+            persona.Tel3,
+            persona.Tel4,
+            persona.Tel5,
+            persona.Tel6,
+          ].filter(Boolean);
+          const telefoniAttuali = telefoniEsistentiMap.get(personaID) || [];
+
+          // 5️⃣ Decide se aggiornare, creare o eliminare telefoni
+          for (let i = 0; i < nuoviNumeri.length; i++) {
+            const numero = nuoviNumeri[i]!;
+            if (telefoniAttuali[i]) {
+              if (telefoniAttuali[i].value !== numero) {
+                telefoniDaAggiornare.push({
+                  id: telefoniAttuali[i].id,
+                  value: numero,
+                });
+              }
+            } else {
+              telefoniDaCreare.push({
+                id: `${personaID}-${numero}`,
+                value: numero,
+                personaID: personaID,
+              });
+            }
+          }
+
+          // Se ci sono più telefoni nel DB di quelli nuovi, rimuoviamo quelli extra
+          if (telefoniAttuali.length > nuoviNumeri.length) {
+            telefoniDaEliminare.push(
+              ...telefoniAttuali.slice(nuoviNumeri.length).map((t) => t.id)
+            );
+          }
+        }
+
+        // 6️⃣ Eseguiamo le operazioni batch nel DB
+        if (telefoniDaCreare.length > 0) {
+          await prisma.telefono.createMany({ data: telefoniDaCreare });
+        }
+
+        if (telefoniDaAggiornare.length > 0) {
+          await Promise.all(
+            telefoniDaAggiornare.map((telefono) =>
+              prisma.telefono.update({
+                where: { id: telefono.id },
+                data: { value: telefono.value },
+              })
+            )
+          );
+        }
+
+        if (telefoniDaEliminare.length > 0) {
+          await prisma.telefono.deleteMany({
+            where: { id: { in: telefoniDaEliminare } },
+          });
+        }
+      });
     }
 
-    revalidatePath("/category/telefono");
-    console.log("Elaborazione telefoni completata con successo");
     return "OK";
   } catch (error) {
-    console.error(
-      "Errore generale durante l'elaborazione dei telefoni: ",
-      error
-    );
-    return "error";
+    console.error("Errore durante l'importazione:", error);
+    return "errore";
   }
+}
+
+// Funzione per dividere l'array in batch
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  return Array.from({ length: Math.ceil(arr.length / size) }, (_, i) =>
+    arr.slice(i * size, i * size + size)
+  );
 }
 
 export async function updateProcessFileSCP(

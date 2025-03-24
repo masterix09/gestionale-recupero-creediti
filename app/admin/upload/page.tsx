@@ -1,10 +1,10 @@
 "use client";
 import {
   addDataToDatore,
-  updateProcessFile,
+  importaPersone,
+  importaTelefoni,
   updateProcessFileABICAB,
   updateProcessFileSCP,
-  updateProcessFileTelefono,
   uploadCCFile,
 } from "@/actions/actionsUpdateFromFile";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
@@ -35,166 +35,156 @@ export default function Page() {
     return allowedExtensions.includes(fileExtension);
   };
 
-  // // @ts-ignore
+  // @ts-ignore
   // const handleFileAnagrafica = (e) => {
+  //   console.log("dentro funzione");
   //   setIspending(true);
-  //   // console.log(e);
   //   const file = e.target.files[0];
-  //   // console.log(file);
-
   //   if (!file) return;
 
   //   if (isExcelFile(file) && file.size !== 0) {
   //     const reader = new FileReader();
   //     reader.readAsArrayBuffer(file);
   //     reader.onload = async (e) => {
-  //       // @ts-ignore
-  //       const data1 = e.target.result;
-  //       const workbook = XLSX.read(data1, { type: "binary" });
+  //       const data1 = e?.target?.result;
+  //       const workbook = XLSX.read(data1, { type: "array" });
   //       const sheetName = workbook.SheetNames[0];
-  //       const sheet = workbook.Sheets[sheetName];
-  //       const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-  //       // console.log(parsedData);
-  //       //@ts-ignore
-  //       setData(parsedData);
-  //       // console.log(parsedData);
-  //       const totalColumn = Object.keys(parsedData.at(0)!).length;
-  //       const totalColumnDatore = totalColumn - 14;
-  //       const counterRowDatore = totalColumnDatore / 16;
+  //       const worksheet = workbook.Sheets[sheetName];
 
-  //       const data = parsedData.map((item) => {
-  //         let arrDatore = [];
+  //       const blockSize = 100;
+  //       let startRow = 2;
+  //       let endRow = startRow + blockSize - 1;
 
-  //         for (let index = 0; index < counterRowDatore; index++) {
-  //           if (index === 0) {
-  //             arrDatore.push({
-  //               // @ts-ignore
-  //               cfPersona: item[`CF`] as string,
-  //               // @ts-ignore
-  //               cfdatore: item[`CFDatoreDiLavoro`] as string,
-  //               // @ts-ignore
-  //               tipo: item[`Tipo`] as string,
-  //               // @ts-ignore
-  //               reddito: item[`Reddito`] as string,
-  //               // @ts-ignore
-  //               mese: item[`MESE`] as string,
-  //               // @ts-ignore
-  //               partTime: item[`PART FULL TIME`] as string,
-  //               // @ts-ignore
-  //               inizio: item[`Inizio`] as string,
-  //               // @ts-ignore
-  //               fine: item[`Fine`] as string,
-  //               // @ts-ignore
-  //               piva: item[`P.IVA_1`] as string,
-  //               // @ts-ignore
-  //               ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
-  //               // @ts-ignore
-  //               nome: item[`Nome_1`] as string,
-  //               // @ts-ignore
-  //               via: item[`Via_1`] as string,
-  //               // @ts-ignore
-  //               cap: item[`Cap_1`] as string,
-  //               // @ts-ignore
-  //               comune: item[`Comune_1`] as string,
-  //               // @ts-ignore
-  //               provincia: item[`Provincia_1`] as string,
-  //             });
-  //           } else {
-  //             arrDatore.push({
-  //               // @ts-ignore
-  //               cfPersona: item[`CF`] as string,
-  //               // @ts-ignore
-  //               cfdatore: item[`CFDatoreDiLavoro_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               tipo: item[`Tipo_${index}`] as string,
-  //               // @ts-ignore
-  //               reddito: item[`Reddito_${index}`] as string,
-  //               // @ts-ignore
-  //               mese: item[`MESE_${index}`] as string,
-  //               // @ts-ignore
-  //               partTime: item[`PART FULL TIME_${index}`] as string,
-  //               // @ts-ignore
-  //               inizio: item[`Inizio_${index}`] as string,
-  //               // @ts-ignore
-  //               fine: item[`Fine_${index}`] as string,
-  //               // @ts-ignore
-  //               piva: item[`P.IVA_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               ragioneSociale: item[
-  //                 `CognomeRagioneSociale_${index + 1}`
-  //               ] as string,
-  //               // @ts-ignore
-  //               nome: item[`Nome_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               via: item[`Via_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               cap: item[`Cap_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               comune: item[`Comune_${index + 1}`] as string,
-  //               // @ts-ignore
-  //               provincia: item[`Provincia_${index + 1}`] as string,
-  //             });
-  //           }
+  //       // Converte il foglio in formato JSON
+  //       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+  //       // Numero di righe (escludendo eventuale intestazione)
+  //       const rowCount = jsonData.length - 1;
+
+  //       console.log("nuemro ", rowCount);
+
+  //       while (startRow <= rowCount) {
+  //         console.log("inizio");
+  //         console.log("startRow => ", startRow);
+  //         console.log("endRow => ", endRow);
+
+  //         // Assicurati che endRow non superi rowCount
+  //         const actualEndRow = Math.min(endRow, rowCount);
+
+  //         const range = XLSX.utils.encode_range({
+  //           s: { r: startRow - 1, c: 0 },
+  //           e: { r: actualEndRow - 1, c: 19 }, // Usa actualEndRow
+  //         });
+
+  //         const blockData = XLSX.utils.sheet_to_json(worksheet, {
+  //           header: 1,
+  //           range: range,
+  //           defval: "",
+  //         }) as any[][];
+
+  //         if (blockData.length === 0) {
+  //           break;
   //         }
-  //         return {
-  //           // @ts-ignore
-  //           CF: item[`CF`] as string,
-  //           // @ts-ignore
-  //           PIVA: item[`P.IVA`] as string,
-  //           // @ts-ignore
-  //           nome: item[`Nome`] as string,
-  //           // @ts-ignore
-  //           cognome: item[`CognomeRagioneSociale`] as string,
-  //           // @ts-ignore
-  //           sesso: item[`Sesso`] as string,
-  //           // @ts-ignore
-  //           comune_nascita: item[`ComuneNasc'a`] as string,
-  //           // @ts-ignore
-  //           provincia_nascita: item[`ProvNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_nascita: item[`DataNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_morte: item[`DataMorte`] as string,
-  //           // @ts-ignore
-  //           via: item[`Via`] as string,
-  //           // @ts-ignore
-  //           cap: item[`Cap`] as string,
-  //           // @ts-ignore
-  //           comune: item[`Comune`] as string,
-  //           // @ts-ignore
-  //           provincia: item[`Provincia`] as string,
-  //           datore: arrDatore,
-  //         };
-  //       });
-  //       // console.log(data);
 
-  //       const res = await updateProcessFile(data);
+  //         console.log("blockData ===> ", blockData);
 
-  //       if (res === "OK") {
-  //         toast({
-  //           title: "Successo!",
-  //           description: "Operazione avvenuta con successo",
+  //         const data = blockData.map((row: any[]) => {
+  //           const CF = row[0] as string;
+  //           const PIVA = row[2] as string;
+  //           const nome = row[4] as string;
+  //           const cognome = row[3] as string;
+  //           const sesso = row[5] as string;
+  //           const comune_nascita = row[7] as string;
+  //           const provincia_nascita = row[6] as string;
+  //           const data_nascita = row[8] as string;
+  //           const data_morte = row[9] as string;
+  //           const via = row[10] as string;
+  //           const cap = row[11] as string;
+  //           const comune = row[12] as string;
+  //           const provincia = row[13] as string;
+
+  //           const totalColumn = row.length;
+  //           const totalColumnDatore = totalColumn - 14;
+  //           const counterRowDatore = totalColumnDatore / 16;
+
+  //           const arrDatore = Array.from(
+  //             { length: counterRowDatore },
+  //             (_, index) => {
+  //               const suffix = index === 0 ? "" : `_${index}`;
+  //               const suffixPlusOne = index === 0 ? "_1" : `_${index + 1}`;
+
+  //               return {
+  //                 cfPersona: CF,
+  //                 cfdatore: row[13 + index * 16] as string,
+  //                 tipo: row[14 + index * 16] as string,
+  //                 reddito: row[15 + index * 16] as string,
+  //                 mese: row[16 + index * 16] as string,
+  //                 partTime: row[17 + index * 16] as string,
+  //                 inizio: row[18 + index * 16] as string,
+  //                 fine: row[19 + index * 16] as string,
+  //                 piva: row[20 + index * 16] as string,
+  //                 ragioneSociale: row[21 + index * 16] as string,
+  //                 nome: row[22 + index * 16] as string,
+  //                 via: row[23 + index * 16] as string,
+  //                 cap: row[24 + index * 16] as string,
+  //                 comune: row[25 + index * 16] as string,
+  //                 provincia: row[26 + index * 16] as string,
+  //               };
+  //             }
+  //           );
+
+  //           return {
+  //             CF: CF,
+  //             PIVA: PIVA,
+  //             nome: nome,
+  //             cognome: cognome,
+  //             sesso: sesso,
+  //             comune_nascita: comune_nascita,
+  //             provincia_nascita: provincia_nascita,
+  //             data_nascita: data_nascita,
+  //             data_morte: data_morte,
+  //             via: via,
+  //             cap: cap,
+  //             comune: comune,
+  //             provincia: provincia,
+  //             datore: arrDatore,
+  //           };
   //         });
-  //       } else {
-  //         toast({
-  //           variant: "destructive",
-  //           title: "Ops ! Errore!",
-  //           description: "Errore operazione. Riprova!",
-  //         });
+
+  //         console.log("data ===> ", data);
+
+  //         const res = await updateProcessFile(data);
+
+  //         if (res === "OK") {
+  //           toast({
+  //             title: "Successo!",
+  //             description: "Operazione avvenuta con successo",
+  //           });
+  //         } else {
+  //           toast({
+  //             variant: "destructive",
+  //             title: "Ops ! Errore!",
+  //             description: "Errore operazione. Riprova!",
+  //           });
+  //         }
+
+  //         startRow = endRow + 1;
+  //         endRow = startRow + blockSize - 1;
+  //         console.log("startRow => ", startRow);
+  //         console.log("endRow => ", endRow);
   //       }
 
   //       setIspending(false);
-
-  //       // await addDataToDatore(data);
   //     };
   //   }
   // };
 
   // @ts-ignore
-  const handleFileAnagrafica = (e) => {
-    console.log("dentro funzione");
+  const handleFilePersona = (e) => {
     setIspending(true);
+
     const file = e.target.files[0];
+
     if (!file) return;
 
     if (isExcelFile(file) && file.size !== 0) {
@@ -202,132 +192,61 @@ export default function Page() {
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
         const data1 = e?.target?.result;
-        const workbook = XLSX.read(data1, { type: "array" });
+        const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[sheetName];
+        const sheet = workbook.Sheets[sheetName];
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
 
-        const blockSize = 100;
-        let startRow = 2;
-        let endRow = startRow + blockSize - 1;
+        // Trasforma i dati per passarli alla server action
+        const data = parsedData.map((item) => {
+          return {
+            //@ts-ignore
+            CF: item[`CF`] as string,
+            //@ts-ignore
+            PIVA: item[`P.IVA`] as string,
+            //@ts-ignore
+            Nome: item[`Nome`] as string,
+            //@ts-ignore
+            CognomeRagioneSociale: item[`CognomeRagioneSociale`] as string,
+            //@ts-ignore
+            Sesso: item[`Sesso`] as string,
+            //@ts-ignore
+            ProvinciaNascita: item[`ProvNasc'a`] as string,
+            //@ts-ignore
+            ComuneNascita: item[`ComuneNasc'a`] as string,
+            //@ts-ignore
+            DataNascita: item[`DataNasc'a`] as string,
+            //@ts-ignore
+            DataMorte: item[`DataMorte`] as string,
+            //@ts-ignore
+            Via: item[`Via`] as string,
+            //@ts-ignore
+            Cap: item[`Cap`] as string,
+            //@ts-ignore
+            Comune: item[`Comune`] as string,
+            //@ts-ignore
+            Provincia: item[`Provincia`] as string,
+          };
+        });
 
-        // Converte il foglio in formato JSON
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        const res = await importaPersone(data);
 
-        // Numero di righe (escludendo eventuale intestazione)
-        const rowCount = jsonData.length - 1;
-
-        console.log("nuemro ", rowCount);
-
-        while (startRow <= rowCount) {
-          console.log("inizio");
-          console.log("startRow => ", startRow);
-          console.log("endRow => ", endRow);
-          const range = XLSX.utils.encode_range({
-            s: { r: startRow - 1, c: 0 },
-            e: { r: endRow - 1, c: 19 }, // Assicurati che 100 sia sufficiente per il tuo file
+        if (res === "OK") {
+          toast({
+            title: "Successo!",
+            description: "Operazione avvenuta con successo",
           });
-
-          const blockData = XLSX.utils.sheet_to_json(worksheet, {
-            header: 1,
-            range: range,
-            defval: "",
-          }) as any[][]; // Tipizzazione esplicita di blockData;
-
-          if (blockData.length === 0) {
-            break;
-          }
-
-          console.log("blockData ===> ", blockData);
-
-          const data = blockData.map((row: any[]) => {
-            const CF = row[0] as string;
-            const PIVA = row[2] as string;
-            const nome = row[4] as string;
-            const cognome = row[3] as string;
-            const sesso = row[5] as string;
-            const comune_nascita = row[7] as string;
-            const provincia_nascita = row[6] as string;
-            const data_nascita = row[8] as string;
-            const data_morte = row[9] as string;
-            const via = row[10] as string;
-            const cap = row[11] as string;
-            const comune = row[12] as string;
-            const provincia = row[13] as string;
-
-            const totalColumn = row.length;
-            const totalColumnDatore = totalColumn - 14;
-            const counterRowDatore = totalColumnDatore / 16;
-
-            const arrDatore = Array.from(
-              { length: counterRowDatore },
-              (_, index) => {
-                const suffix = index === 0 ? "" : `_${index}`;
-                const suffixPlusOne = index === 0 ? "_1" : `_${index + 1}`;
-
-                return {
-                  cfPersona: CF,
-                  cfdatore: row[13 + index * 16] as string,
-                  tipo: row[14 + index * 16] as string,
-                  reddito: row[15 + index * 16] as string,
-                  mese: row[16 + index * 16] as string,
-                  partTime: row[17 + index * 16] as string,
-                  inizio: row[18 + index * 16] as string,
-                  fine: row[19 + index * 16] as string,
-                  piva: row[20 + index * 16] as string,
-                  ragioneSociale: row[21 + index * 16] as string,
-                  nome: row[22 + index * 16] as string,
-                  via: row[23 + index * 16] as string,
-                  cap: row[24 + index * 16] as string,
-                  comune: row[25 + index * 16] as string,
-                  provincia: row[26 + index * 16] as string,
-                };
-              }
-            );
-
-            return {
-              CF: CF,
-              PIVA: PIVA,
-              nome: nome,
-              cognome: cognome,
-              sesso: sesso,
-              comune_nascita: comune_nascita,
-              provincia_nascita: provincia_nascita,
-              data_nascita: data_nascita,
-              data_morte: data_morte,
-              via: via,
-              cap: cap,
-              comune: comune,
-              provincia: provincia,
-              datore: arrDatore,
-            };
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Ops! Errore!",
+            description: "Errore operazione. Riprova!",
           });
-
-          console.log("data ===> ", data);
-
-          const res = await updateProcessFile(data);
-
-          if (res === "OK") {
-            toast({
-              title: "Successo!",
-              description: "Operazione avvenuta con successo",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Ops ! Errore!",
-              description: "Errore operazione. Riprova!",
-            });
-          }
-
-          startRow = endRow + 1;
-          endRow = startRow + blockSize - 1;
-          console.log("startRow => ", startRow);
-          console.log("endRow => ", endRow);
         }
-
-        setIspending(false);
       };
     }
+
+    setIspending(false);
   };
 
   // @ts-ignore
@@ -521,20 +440,29 @@ export default function Page() {
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const parsedData: { CF: string; [key: string]: string }[] =
-          XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
         // console.log(parsedData);
-
-        // Esegui la trasformazione
-        const transformedArray = transformArray(parsedData);
-
-        // console.log("transformed array => ", transformedArray);
-
         //@ts-ignore
-        setData(transformedArray);
-
-        const res = await updateProcessFileTelefono(transformedArray);
-
+        setData(parsedData);
+        const data = parsedData.map((item) => {
+          return {
+            // @ts-ignore
+            CF: item[`CF`] as string,
+            // @ts-ignore
+            Tel1: item[`Tel 1`] as string,
+            // @ts-ignore
+            Tel2: item[`Tel 2`] as string,
+            // @ts-ignore
+            Tel3: item[`Tel 3`] as string,
+            // @ts-ignore
+            Tel4: item[`Tel 4`] as string,
+            // @ts-ignore
+            Tel5: item[`Tel 5`] as string,
+            // @ts-ignore
+            Tel6: item[`Tel 6`] as string,
+          };
+        });
+        const res = await importaTelefoni(data);
         if (res === "OK") {
           toast({
             title: "Successo!",
@@ -736,7 +664,7 @@ export default function Page() {
             name="fileAnagrafica"
             id="fileAnagrafica"
             accept=".xlsx, .xls"
-            onChange={handleFileAnagrafica}
+            onChange={handleFilePersona}
             ref={fileRefAnagrafica}
             className="text-white"
           />
