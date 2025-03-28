@@ -423,7 +423,7 @@ export async function importaPersone(personeInput: PersonaInput[]) {
         // console.log("persone da agg => ", personeDaAggiornare.length);
 
         const response = await fetch(
-          "https://worker-gestionale-recupero-crediti.onrender.com/add-job",
+          "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
