@@ -229,6 +229,8 @@ export default function Page() {
           };
         });
 
+        // const res = await importaPersone(data);
+
         const res = await importaPersone(data);
 
         if (res === "OK") {

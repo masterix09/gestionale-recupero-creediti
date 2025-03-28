@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { personaQueue } from "@/lib/queue.mjs";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { v4 as uuid_v4 } from "uuid";
@@ -305,115 +306,135 @@ export async function importaPersone(personeInput: PersonaInput[]) {
 
     // Esegui ogni batch come una transazione separata
     for (const batch of batches) {
-      await prisma.$transaction(
-        async (prisma) => {
-          // Imposta il timeout delle transazioni
-          await prisma.$executeRaw`SET statement_timeout = 30000;`; // Impostato a 30 secondi
+      await prisma.$transaction(async (prisma) => {
+        // Imposta il timeout delle transazioni
+        await prisma.$executeRaw`SET statement_timeout = 30000;`; // Impostato a 30 secondi
 
-          // 1. Estrai tutti i CF unici dal file Excel per il batch corrente
-          const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
+        // 1. Estrai tutti i CF unici dal file Excel per il batch corrente
+        const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
 
-          // 2. Ottieni tutte le persone esistenti nel DB per il batch
-          const personeEsistenti = await prisma.persona.findMany({
-            where: {
-              CF: { in: cfUnici },
-            },
-          });
+        // 2. Ottieni tutte le persone esistenti nel DB per il batch
+        const personeEsistenti = await prisma.persona.findMany({
+          where: {
+            CF: { in: cfUnici },
+          },
+        });
 
-          // 3. Organizza le operazioni di creazione e aggiornamento
-          const personeDaCreare = [];
-          const personeDaAggiornare = [];
+        // 3. Organizza le operazioni di creazione e aggiornamento
+        const personeDaCreare = [];
+        const personeDaAggiornare = [];
 
-          for (const personaInput of batch) {
-            // Verifica se la persona esiste
-            const personaEsistente = personeEsistenti.find(
-              (p) => p.CF === personaInput.CF
-            );
+        for (const personaInput of batch) {
+          // Verifica se la persona esiste
+          const personaEsistente = personeEsistenti.find(
+            (p) => p.CF === personaInput.CF
+          );
 
-            const personaData = {
-              id: personaInput.CF, // Aggiunto campo id uguale al CF
-              CF: personaInput.CF,
-              PIVA: personaInput.PIVA.toString(),
-              cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
-              nome: personaInput.Nome.toString(), // nome della società
-              sesso: personaInput.Sesso.toString(),
-              comune_nascita: personaInput.ComuneNascita.toString(),
-              provincia_nascita: personaInput.ProvinciaNascita.toString(),
-              data_nascita: personaInput.DataNascita.toString(),
-              data_morte: personaInput.DataMorte.toString(),
-              via: personaEsistente
-                ? personaEsistente?.via?.length > 0
-                  ? personaEsistente.via.at(personaEsistente.via.length) ===
-                    personaInput.Via.toString()
-                    ? personaEsistente.via
-                    : [...personaEsistente?.via, personaInput.Via.toString()]
-                  : [personaInput.Via.toString()]
-                : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
-              cap: personaEsistente
-                ? personaEsistente?.cap?.length > 0
-                  ? personaEsistente.cap.at(personaEsistente.cap.length) ===
-                    personaInput.Cap.toString()
-                    ? personaEsistente.cap
-                    : [...personaEsistente?.cap, personaInput.Cap.toString()]
-                  : [personaInput.Cap.toString()]
-                : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
-              comune: personaEsistente
-                ? personaEsistente?.comune?.length > 0
-                  ? personaEsistente.comune.at(
-                      personaEsistente.comune.length
-                    ) === personaInput.Comune.toString()
-                    ? personaEsistente.comune
-                    : [
-                        ...personaEsistente?.comune,
-                        personaInput.Comune.toString(),
-                      ]
-                  : [personaInput.Comune.toString()]
-                : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
-              provincia: personaEsistente
-                ? personaEsistente?.provincia?.length > 0
-                  ? personaEsistente.provincia.at(
-                      personaEsistente.provincia.length
-                    ) === personaInput.Provincia.toString()
-                    ? personaEsistente.provincia
-                    : [
-                        ...personaEsistente?.provincia,
-                        personaInput.Provincia.toString(),
-                      ]
-                  : [personaInput.Provincia.toString()]
-                : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
-            };
+          const personaData = {
+            id: personaInput.CF, // Aggiunto campo id uguale al CF
+            CF: personaInput.CF,
+            PIVA: personaInput.PIVA.toString(),
+            cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
+            nome: personaInput.Nome.toString(), // nome della società
+            sesso: personaInput.Sesso.toString(),
+            comune_nascita: personaInput.ComuneNascita.toString(),
+            provincia_nascita: personaInput.ProvinciaNascita.toString(),
+            data_nascita: personaInput.DataNascita.toString(),
+            data_morte: personaInput.DataMorte.toString(),
+            via: personaEsistente
+              ? personaEsistente?.via?.length > 0
+                ? personaEsistente.via.at(personaEsistente.via.length) ===
+                  personaInput.Via.toString()
+                  ? personaEsistente.via
+                  : [...personaEsistente?.via, personaInput.Via.toString()]
+                : [personaInput.Via.toString()]
+              : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
+            cap: personaEsistente
+              ? personaEsistente?.cap?.length > 0
+                ? personaEsistente.cap.at(personaEsistente.cap.length) ===
+                  personaInput.Cap.toString()
+                  ? personaEsistente.cap
+                  : [...personaEsistente?.cap, personaInput.Cap.toString()]
+                : [personaInput.Cap.toString()]
+              : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
+            comune: personaEsistente
+              ? personaEsistente?.comune?.length > 0
+                ? personaEsistente.comune.at(personaEsistente.comune.length) ===
+                  personaInput.Comune.toString()
+                  ? personaEsistente.comune
+                  : [
+                      ...personaEsistente?.comune,
+                      personaInput.Comune.toString(),
+                    ]
+                : [personaInput.Comune.toString()]
+              : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
+            provincia: personaEsistente
+              ? personaEsistente?.provincia?.length > 0
+                ? personaEsistente.provincia.at(
+                    personaEsistente.provincia.length
+                  ) === personaInput.Provincia.toString()
+                  ? personaEsistente.provincia
+                  : [
+                      ...personaEsistente?.provincia,
+                      personaInput.Provincia.toString(),
+                    ]
+                : [personaInput.Provincia.toString()]
+              : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+          };
 
-            if (personaEsistente) {
-              // 4. Se la persona esiste, aggiungiamo l'operazione di aggiornamento
-              personeDaAggiornare.push({
-                where: { CF: personaInput.CF },
-                data: personaData,
-              });
-            } else {
-              // 5. Se la persona non esiste, la aggiungiamo all'elenco di creazione
-              personeDaCreare.push(personaData);
-            }
+          if (personaEsistente) {
+            // 4. Se la persona esiste, aggiungiamo l'operazione di aggiornamento
+            personeDaAggiornare.push({
+              where: { CF: personaInput.CF },
+              data: personaData,
+            });
+          } else {
+            // 5. Se la persona non esiste, la aggiungiamo all'elenco di creazione
+            personeDaCreare.push(personaData);
           }
+        }
 
-          // 6. Esegui le operazioni di creazione in batch
-          if (personeDaCreare.length > 0) {
-            await prisma.persona.createMany({ data: personeDaCreare });
-          }
+        // 6. Esegui le operazioni di creazione in batch
+        // if (personeDaCreare.length > 0) {
+        //   await prisma.persona.createMany({ data: personeDaCreare });
+        // }
 
-          // 7. Esegui gli aggiornamenti in batch
-          if (personeDaAggiornare.length > 0) {
-            await Promise.all(
-              personeDaAggiornare.map((updateData) =>
-                prisma.persona.update({
-                  where: updateData.where,
-                  data: updateData.data,
-                })
-              )
-            );
+        // // 7. Esegui gli aggiornamenti in batch
+        // if (personeDaAggiornare.length > 0) {
+        //   await Promise.all(
+        //     personeDaAggiornare.map((updateData) =>
+        //       prisma.persona.update({
+        //         where: updateData.where,
+        //         data: updateData.data,
+        //       })
+        //     )
+        //   );
+        // }
+
+        // await personaQueue.add("processaPersona", {
+        //   personeDaCreare,
+        //   personeDaAggiornare,
+        // });
+
+        // console.log("persone da creare => ", personeDaCreare.length);
+        // console.log(
+        //   "persona da creare 0=> ",
+        //   JSON.stringify(personeDaCreare.at(1))
+        // );
+        // console.log("persone da agg => ", personeDaAggiornare.length);
+
+        const response = await fetch(
+          "https://worker-gestionale-recupero-crediti.onrender.com/add-job",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
           }
-        },
-        { timeout: 30000 }
-      );
+        );
+
+        if (!response.ok) throw new Error("Errore durante l'aggiunta del job");
+        return "OK";
+      });
     }
 
     return "OK";
