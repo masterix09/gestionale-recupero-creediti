@@ -1,7 +1,6 @@
 "use server";
 
 import prisma from "@/lib/db";
-import { personaQueue } from "@/lib/queue.mjs";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { v4 as uuid_v4 } from "uuid";
