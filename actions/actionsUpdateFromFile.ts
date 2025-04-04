@@ -304,6 +304,8 @@ export async function importaPersone(personeInput: PersonaInput[]) {
           }
         }
 
+        console.log("faccio la chiamata");
+
         const response = await fetch(
           "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
           {
