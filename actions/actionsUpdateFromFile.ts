@@ -203,122 +203,243 @@ export async function addDataToDatore(data: TData[]) {
   }
 }
 
+// export async function importaPersone(personeInput: PersonaInput[]) {
+//   try {
+//     // Suddividi i record in blocchi da 100
+//     const batchSize = 100;
+//     const batches = [];
+
+//     // Suddividi i dati in batch
+//     for (let i = 0; i < personeInput.length; i += batchSize) {
+//       batches.push(personeInput.slice(i, i + batchSize));
+//     }
+
+//     // Esegui ogni batch come una transazione separata
+//     for (const batch of batches) {
+//       await prisma.$transaction(async (prisma) => {
+//         // Imposta il timeout delle transazioni
+//         await prisma.$executeRaw`SET statement_timeout = 30000;`; // Impostato a 30 secondi
+
+//         // 1. Estrai tutti i CF unici dal file Excel per il batch corrente
+//         const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
+
+//         // 2. Ottieni tutte le persone esistenti nel DB per il batch
+//         const personeEsistenti = await prisma.persona.findMany({
+//           where: {
+//             CF: { in: cfUnici },
+//           },
+//         });
+
+//         // 3. Organizza le operazioni di creazione e aggiornamento
+//         const personeDaCreare = [];
+//         const personeDaAggiornare = [];
+
+//         for (const personaInput of batch) {
+//           // Verifica se la persona esiste
+//           const personaEsistente = personeEsistenti.find(
+//             (p) => p.CF === personaInput.CF
+//           );
+
+//           const personaData = {
+//             id: personaInput.CF, // Aggiunto campo id uguale al CF
+//             CF: personaInput.CF,
+//             PIVA: personaInput.PIVA.toString(),
+//             cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
+//             nome: personaInput.Nome.toString(), // nome della società
+//             sesso: personaInput.Sesso.toString(),
+//             comune_nascita: personaInput.ComuneNascita.toString(),
+//             provincia_nascita: personaInput.ProvinciaNascita.toString(),
+//             data_nascita: personaInput.DataNascita.toString(),
+//             data_morte: personaInput.DataMorte.toString(),
+//             via: personaEsistente
+//               ? personaEsistente?.via?.length > 0
+//                 ? personaEsistente.via.at(personaEsistente.via.length) ===
+//                   personaInput.Via.toString()
+//                   ? personaEsistente.via
+//                   : [...personaEsistente?.via, personaInput.Via.toString()]
+//                 : [personaInput.Via.toString()]
+//               : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
+//             cap: personaEsistente
+//               ? personaEsistente?.cap?.length > 0
+//                 ? personaEsistente.cap.at(personaEsistente.cap.length) ===
+//                   personaInput.Cap.toString()
+//                   ? personaEsistente.cap
+//                   : [...personaEsistente?.cap, personaInput.Cap.toString()]
+//                 : [personaInput.Cap.toString()]
+//               : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
+//             comune: personaEsistente
+//               ? personaEsistente?.comune?.length > 0
+//                 ? personaEsistente.comune.at(personaEsistente.comune.length) ===
+//                   personaInput.Comune.toString()
+//                   ? personaEsistente.comune
+//                   : [
+//                       ...personaEsistente?.comune,
+//                       personaInput.Comune.toString(),
+//                     ]
+//                 : [personaInput.Comune.toString()]
+//               : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
+//             provincia: personaEsistente
+//               ? personaEsistente?.provincia?.length > 0
+//                 ? personaEsistente.provincia.at(
+//                     personaEsistente.provincia.length
+//                   ) === personaInput.Provincia.toString()
+//                   ? personaEsistente.provincia
+//                   : [
+//                       ...personaEsistente?.provincia,
+//                       personaInput.Provincia.toString(),
+//                     ]
+//                 : [personaInput.Provincia.toString()]
+//               : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+//           };
+
+//           if (personaEsistente) {
+//             // 4. Se la persona esiste, aggiungiamo l'operazione di aggiornamento
+//             personeDaAggiornare.push({
+//               where: { CF: personaInput.CF },
+//               data: personaData,
+//             });
+//           } else {
+//             // 5. Se la persona non esiste, la aggiungiamo all'elenco di creazione
+//             personeDaCreare.push(personaData);
+//           }
+//         }
+
+//         console.log("faccio la chiamata");
+
+//         const response = await fetch(
+//           "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
+//           {
+//             method: "POST",
+//             headers: { "Content-Type": "application/json" },
+//             body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
+//           }
+//         );
+
+//         if (!response.ok)
+//           throw new Error("Errore durante l'aggiunta del job Anagrafica");
+//         return "OK";
+//       });
+//     }
+
+//     revalidatePath("/category/anagrafica");
+//     return "OK";
+//   } catch (error) {
+//     console.error("Errore durante l'importazione delle persone:", error);
+//     return "errore";
+//   }
+// }
+
 export async function importaPersone(personeInput: PersonaInput[]) {
   try {
-    // Suddividi i record in blocchi da 100
     const batchSize = 100;
-    const batches = [];
 
-    // Suddividi i dati in batch
     for (let i = 0; i < personeInput.length; i += batchSize) {
-      batches.push(personeInput.slice(i, i + batchSize));
-    }
+      const batch = personeInput.slice(i, i + batchSize);
 
-    // Esegui ogni batch come una transazione separata
-    for (const batch of batches) {
-      await prisma.$transaction(async (prisma) => {
-        // Imposta il timeout delle transazioni
-        await prisma.$executeRaw`SET statement_timeout = 30000;`; // Impostato a 30 secondi
+      // --- 1. Estrai i CF unici del batch
+      const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
 
-        // 1. Estrai tutti i CF unici dal file Excel per il batch corrente
-        const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
+      // --- 2. Recupera le persone esistenti dal DB
+      const personeEsistenti = await prisma.persona.findMany({
+        where: { CF: { in: cfUnici } },
+      });
 
-        // 2. Ottieni tutte le persone esistenti nel DB per il batch
-        const personeEsistenti = await prisma.persona.findMany({
-          where: {
-            CF: { in: cfUnici },
-          },
-        });
+      // --- 3. Prepara dati per creazione/aggiornamento
+      const personeDaCreare: any[] = [];
+      const personeDaAggiornare: any[] = [];
 
-        // 3. Organizza le operazioni di creazione e aggiornamento
-        const personeDaCreare = [];
-        const personeDaAggiornare = [];
-
-        for (const personaInput of batch) {
-          // Verifica se la persona esiste
-          const personaEsistente = personeEsistenti.find(
-            (p) => p.CF === personaInput.CF
-          );
-
-          const personaData = {
-            id: personaInput.CF, // Aggiunto campo id uguale al CF
-            CF: personaInput.CF,
-            PIVA: personaInput.PIVA.toString(),
-            cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
-            nome: personaInput.Nome.toString(), // nome della società
-            sesso: personaInput.Sesso.toString(),
-            comune_nascita: personaInput.ComuneNascita.toString(),
-            provincia_nascita: personaInput.ProvinciaNascita.toString(),
-            data_nascita: personaInput.DataNascita.toString(),
-            data_morte: personaInput.DataMorte.toString(),
-            via: personaEsistente
-              ? personaEsistente?.via?.length > 0
-                ? personaEsistente.via.at(personaEsistente.via.length) ===
-                  personaInput.Via.toString()
-                  ? personaEsistente.via
-                  : [...personaEsistente?.via, personaInput.Via.toString()]
-                : [personaInput.Via.toString()]
-              : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
-            cap: personaEsistente
-              ? personaEsistente?.cap?.length > 0
-                ? personaEsistente.cap.at(personaEsistente.cap.length) ===
-                  personaInput.Cap.toString()
-                  ? personaEsistente.cap
-                  : [...personaEsistente?.cap, personaInput.Cap.toString()]
-                : [personaInput.Cap.toString()]
-              : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
-            comune: personaEsistente
-              ? personaEsistente?.comune?.length > 0
-                ? personaEsistente.comune.at(personaEsistente.comune.length) ===
-                  personaInput.Comune.toString()
-                  ? personaEsistente.comune
-                  : [
-                      ...personaEsistente?.comune,
-                      personaInput.Comune.toString(),
-                    ]
-                : [personaInput.Comune.toString()]
-              : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
-            provincia: personaEsistente
-              ? personaEsistente?.provincia?.length > 0
-                ? personaEsistente.provincia.at(
-                    personaEsistente.provincia.length
-                  ) === personaInput.Provincia.toString()
-                  ? personaEsistente.provincia
-                  : [
-                      ...personaEsistente?.provincia,
-                      personaInput.Provincia.toString(),
-                    ]
-                : [personaInput.Provincia.toString()]
-              : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
-          };
-
-          if (personaEsistente) {
-            // 4. Se la persona esiste, aggiungiamo l'operazione di aggiornamento
-            personeDaAggiornare.push({
-              where: { CF: personaInput.CF },
-              data: personaData,
-            });
-          } else {
-            // 5. Se la persona non esiste, la aggiungiamo all'elenco di creazione
-            personeDaCreare.push(personaData);
-          }
-        }
-
-        console.log("faccio la chiamata");
-
-        const response = await fetch(
-          "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
-          }
+      for (const personaInput of batch) {
+        const personaEsistente = personeEsistenti.find(
+          (p) => p.CF === personaInput.CF
         );
 
-        if (!response.ok)
-          throw new Error("Errore durante l'aggiunta del job Anagrafica");
-        return "OK";
-      });
+        const nuovaVia = personaInput.Via.toString();
+        const nuovaCap = personaInput.Cap.toString();
+        const nuovoComune = personaInput.Comune.toString();
+        const nuovaProvincia = personaInput.Provincia.toString();
+
+        const personaData = {
+          id: personaInput.CF, // Aggiunto campo id uguale al CF
+          CF: personaInput.CF,
+          PIVA: personaInput.PIVA.toString(),
+          cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
+          nome: personaInput.Nome.toString(), // nome della società
+          sesso: personaInput.Sesso.toString(),
+          comune_nascita: personaInput.ComuneNascita.toString(),
+          provincia_nascita: personaInput.ProvinciaNascita.toString(),
+          data_nascita: personaInput.DataNascita.toString(),
+          data_morte: personaInput.DataMorte.toString(),
+          via: personaEsistente
+            ? personaEsistente?.via?.length > 0
+              ? personaEsistente.via.at(personaEsistente.via.length) ===
+                personaInput.Via.toString()
+                ? personaEsistente.via
+                : [...personaEsistente?.via, personaInput.Via.toString()]
+              : [personaInput.Via.toString()]
+            : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
+          cap: personaEsistente
+            ? personaEsistente?.cap?.length > 0
+              ? personaEsistente.cap.at(personaEsistente.cap.length) ===
+                personaInput.Cap.toString()
+                ? personaEsistente.cap
+                : [...personaEsistente?.cap, personaInput.Cap.toString()]
+              : [personaInput.Cap.toString()]
+            : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
+          comune: personaEsistente
+            ? personaEsistente?.comune?.length > 0
+              ? personaEsistente.comune.at(personaEsistente.comune.length) ===
+                personaInput.Comune.toString()
+                ? personaEsistente.comune
+                : [...personaEsistente?.comune, personaInput.Comune.toString()]
+              : [personaInput.Comune.toString()]
+            : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
+          provincia: personaEsistente
+            ? personaEsistente?.provincia?.length > 0
+              ? personaEsistente.provincia.at(
+                  personaEsistente.provincia.length
+                ) === personaInput.Provincia.toString()
+                ? personaEsistente.provincia
+                : [
+                    ...personaEsistente?.provincia,
+                    personaInput.Provincia.toString(),
+                  ]
+              : [personaInput.Provincia.toString()]
+            : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+        };
+
+        if (personaEsistente) {
+          personeDaAggiornare.push({
+            where: { CF: personaInput.CF },
+            data: personaData,
+          });
+        } else {
+          personeDaCreare.push(personaData);
+        }
+      }
+
+      // --- 4. Effettua la chiamata esterna fuori dalla transazione
+      console.log("faccio la chiamata");
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+      const response = await fetch(
+        "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          signal: controller.signal,
+          body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
+        }
+      );
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Errore durante fetch:", response.status, errorText);
+        throw new Error("Errore durante l'aggiunta del job Anagrafica");
+      }
     }
 
     revalidatePath("/category/anagrafica");
