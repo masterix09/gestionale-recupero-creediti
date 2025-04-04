@@ -68,43 +68,67 @@ export async function addDataToDatore(data: TData[]) {
   try {
     console.log("Inizio elaborazione di ", data.length, " persone");
 
-    const recordsToCreate = [];
-    const recordsToUpdate = [];
+    console.log(
+      "Numero di datori ",
+      data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
+    );
 
-    for (const persona of data) {
-      for (const datore of persona.datore) {
-        const {
-          cap,
-          comune,
-          fine,
-          inizio,
-          mese,
-          nome,
-          partTime,
-          piva,
-          provincia,
-          ragioneSociale,
-          reddito,
-          tipo,
-          via,
-          cfPersona,
-          cfdatore,
-        } = datore;
+    // Suddividi i record in blocchi da 100
+    const batchSize = 25;
+    const batches = [];
 
-        // Verifica se il record esiste già
-        const existingRecord = await prisma.datore.findFirst({
-          where: {
-            personaID: cfPersona,
-            CF: cfdatore,
-          },
-        });
+    // Suddividi i dati in batch
+    for (let i = 0; i < data.length; i += batchSize) {
+      batches.push(data.slice(i, i + batchSize));
+    }
 
-        if (existingRecord) {
-          // Se il record esiste, aggiungilo all'array di aggiornamento
-          recordsToUpdate.push({
-            where: { id: existingRecord.id },
-            data: {
+    console.log("batches => ", batches.length);
+
+    const dataOnlyCF: string[] = data.map((item) => item.CF);
+
+    const existingDatore = await prisma.datore.findMany({
+      where: {
+        personaID: {
+          in: dataOnlyCF,
+        },
+      },
+    });
+
+    // Esegui ogni batch come una transazione separata
+    for (const batch of batches) {
+      const recordsToCreate = [];
+      const recordsToUpdate = [];
+      for (const item of batch) {
+        for (const element of item.datore) {
+          // Verifica se il record esiste già
+          const existingRecord = existingDatore
+            .filter((el) => el.personaID === item.CF)
+            .at(0);
+
+          const {
+            cap,
+            comune,
+            fine,
+            inizio,
+            mese,
+            nome,
+            partTime,
+            piva,
+            provincia,
+            ragioneSociale,
+            reddito,
+            tipo,
+            via,
+            cfPersona,
+            cfdatore,
+          } = element;
+
+          if (!existingRecord) {
+            // Se il record non esiste, aggiungilo all'array
+            recordsToCreate.push({
+              id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
               cap: cap?.toString() ?? "",
+              CF: cfdatore?.toString() ?? "",
               comune,
               fine,
               inizio,
@@ -117,45 +141,56 @@ export async function addDataToDatore(data: TData[]) {
               tipo,
               tipologia_contratto: partTime?.toString(),
               via,
-            },
-          });
-        } else {
-          // Se il record non esiste, aggiungilo all'array di creazione
-          recordsToCreate.push({
-            id: uuid_v4(),
-            cap: cap?.toString() ?? "",
-            CF: cfdatore?.toString() ?? "",
-            comune,
-            fine,
-            inizio,
-            mese: mese?.toString() ?? "",
-            nome,
-            PIVA: piva?.toString(),
-            provincia,
-            ragione_sociale: ragioneSociale?.toString(),
-            reddito: reddito?.toString() ?? "",
-            tipo,
-            tipologia_contratto: partTime?.toString(),
-            via,
-            personaID: cfPersona,
-          });
+              personaID: cfPersona,
+            });
+          } else {
+            recordsToUpdate.push({
+              where: { id: existingRecord.id },
+              data: {
+                cap: cap?.toString() ?? "",
+                comune,
+                fine,
+                inizio,
+                mese: mese?.toString() ?? "",
+                nome,
+                PIVA: piva?.toString(),
+                provincia,
+                ragione_sociale: ragioneSociale?.toString(),
+                reddito: reddito?.toString() ?? "",
+                tipo,
+                tipologia_contratto: partTime?.toString(),
+                via,
+              },
+            });
+          }
         }
       }
-    }
 
-    // Esegui le operazioni di creazione e aggiornamento in batch
-    if (recordsToCreate.length > 0) {
-      await prisma.datore.createMany({
-        data: recordsToCreate,
-      });
-      console.log("Creati ", recordsToCreate.length, " datori");
-    }
+      console.log("faccio la chiamata");
+      console.log("recdords to create length => ", recordsToCreate.length);
 
-    if (recordsToUpdate.length > 0) {
-      for (const updateData of recordsToUpdate) {
-        await prisma.datore.update(updateData);
+      console.log(
+        "create ids => ",
+        recordsToCreate.map((item) => item.id)
+      );
+
+      const response = await fetch(
+        "https://worker-gestionale-recupero-crediti.onrender.com/datore",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recordsToCreate,
+            recordsToUpdate,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.log(response);
+        throw new Error("Errore durante l'aggiunta del Datore Create");
       }
-      console.log("Aggiornati ", recordsToUpdate.length, " datori");
+      // return "OK";
     }
 
     revalidatePath(`/category/lavoro`);
@@ -167,130 +202,6 @@ export async function addDataToDatore(data: TData[]) {
     return "error";
   }
 }
-
-// funziona bene
-// export async function updateProcessFile(data: TData[]) {
-//   try {
-//     console.log("Inizio elaborazione di ", data.length, " record");
-
-//     const cfs = data.map((item) => item.CF);
-
-//     const personeEsistenti = await prisma.persona.findMany({
-//       where: {
-//         CF: {
-//           in: cfs,
-//         },
-//       },
-//     });
-
-//     const personeEsistentiMap = new Map(
-//       personeEsistenti.map((persona) => [persona.CF, persona])
-//     );
-
-//     console.log("personeEsistentiMap => ", personeEsistentiMap);
-
-//     const createData: Prisma.PersonaCreateManyInput[] = [];
-//     const updateData: {
-//       where: { CF: string };
-//       data: Prisma.PersonaUpdateInput;
-//     }[] = [];
-
-//     for (const item of data) {
-//       const newBirthDate = item.data_nascita.toString();
-//       const newDieDate = item.data_morte.toString();
-
-//       if (personeEsistentiMap.has(item.CF)) {
-//         // Aggiornamento
-//         const personaEsistente = personeEsistentiMap.get(item.CF);
-
-//         if (personaEsistente) {
-//           const updatedCap = personaEsistente.cap.includes(item.cap)
-//             ? personaEsistente.cap
-//             : [...personaEsistente.cap, item.cap];
-//           const updatedComune = personaEsistente.comune.includes(item.comune)
-//             ? personaEsistente.comune
-//             : [...personaEsistente.comune, item.comune];
-//           const updatedProvincia = personaEsistente.provincia.includes(
-//             item.provincia
-//           )
-//             ? personaEsistente.provincia
-//             : [...personaEsistente.provincia, item.provincia];
-//           const updatedVia = personaEsistente.via.includes(item.via)
-//             ? personaEsistente.via
-//             : [...personaEsistente.via, item.via];
-
-//           updateData.push({
-//             where: { CF: item.CF },
-//             data: {
-//               cap: updatedCap,
-//               comune: updatedComune,
-//               provincia: updatedProvincia,
-//               via: updatedVia,
-//               cognome: item.cognome,
-//               comune_nascita: item.comune_nascita,
-//               data_morte: newDieDate,
-//               data_nascita: newBirthDate,
-//               nome: item.nome,
-//               PIVA: item.PIVA,
-//               provincia_nascita: item.provincia_nascita,
-//               sesso: item.sesso,
-//             },
-//           });
-//         }
-//       } else {
-//         console.log("item create => ", item.CF);
-//         // Creazione
-//         createData.push({
-//           id: item.CF,
-//           cap: [item.cap],
-//           cognome: item.cognome,
-//           comune: [item.comune],
-//           comune_nascita: item.comune_nascita,
-//           data_morte: newDieDate,
-//           data_nascita: newBirthDate,
-//           nome: item.nome,
-//           PIVA: item.PIVA,
-//           provincia: [item.provincia],
-//           provincia_nascita: item.provincia_nascita,
-//           sesso: item.sesso,
-//           via: [item.via],
-//           CF: item.CF,
-//         });
-//       }
-//     }
-
-//     // Esegui updateMany se ci sono dati da aggiornare
-//     if (updateData.length > 0) {
-//       for (const updateItem of updateData) {
-//         await prisma.persona.update({
-//           where: updateItem.where,
-//           data: updateItem.data,
-//         });
-//       }
-//       console.log("updateMany completato per ", updateData.length, " record");
-//     }
-
-//     console.log("createData => ", createData);
-
-//     // Esegui createMany se ci sono dati da creare
-//     if (createData.length > 0) {
-//       await prisma.persona.createMany({
-//         data: createData,
-//       });
-//       console.log("createMany completato per ", createData.length, " record");
-//     }
-
-//     console.log("update [0] => ", updateData.at(0));
-//     console.log("update");
-
-//     revalidatePath(`/category/anagrafica`);
-//     console.log("Elaborazione completata con successo");
-//     return "OK";
-//   } catch (error) {
-//     console.error("Errore generale durante l'elaborazione: ", error);
-//     return "error";
-//   }
-// }
 
 export async function importaPersone(personeInput: PersonaInput[]) {
   try {
@@ -393,35 +304,6 @@ export async function importaPersone(personeInput: PersonaInput[]) {
           }
         }
 
-        // 6. Esegui le operazioni di creazione in batch
-        // if (personeDaCreare.length > 0) {
-        //   await prisma.persona.createMany({ data: personeDaCreare });
-        // }
-
-        // // 7. Esegui gli aggiornamenti in batch
-        // if (personeDaAggiornare.length > 0) {
-        //   await Promise.all(
-        //     personeDaAggiornare.map((updateData) =>
-        //       prisma.persona.update({
-        //         where: updateData.where,
-        //         data: updateData.data,
-        //       })
-        //     )
-        //   );
-        // }
-
-        // await personaQueue.add("processaPersona", {
-        //   personeDaCreare,
-        //   personeDaAggiornare,
-        // });
-
-        // console.log("persone da creare => ", personeDaCreare.length);
-        // console.log(
-        //   "persona da creare 0=> ",
-        //   JSON.stringify(personeDaCreare.at(1))
-        // );
-        // console.log("persone da agg => ", personeDaAggiornare.length);
-
         const response = await fetch(
           "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
           {
@@ -431,11 +313,13 @@ export async function importaPersone(personeInput: PersonaInput[]) {
           }
         );
 
-        if (!response.ok) throw new Error("Errore durante l'aggiunta del job");
+        if (!response.ok)
+          throw new Error("Errore durante l'aggiunta del job Anagrafica");
         return "OK";
       });
     }
 
+    revalidatePath("/category/anagrafica");
     return "OK";
   } catch (error) {
     console.error("Errore durante l'importazione delle persone:", error);
@@ -445,7 +329,7 @@ export async function importaPersone(personeInput: PersonaInput[]) {
 
 export async function importaTelefoni(personeInput: TelefonoInput[]) {
   try {
-    const batchSize = 300; // Per evitare timeout
+    const batchSize = 100; // Per evitare timeout
     const chunks = chunkArray(personeInput, batchSize);
 
     for (const batch of chunks) {
@@ -534,30 +418,26 @@ export async function importaTelefoni(personeInput: TelefonoInput[]) {
           }
         }
 
-        // 6️⃣ Eseguiamo le operazioni batch nel DB
-        if (telefoniDaCreare.length > 0) {
-          await prisma.telefono.createMany({ data: telefoniDaCreare });
-        }
+        const response = await fetch(
+          "https://worker-gestionale-recupero-crediti.onrender.com/telefono",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              telefoniDaCreare,
+              telefoniDaAggiornare,
+              telefoniDaEliminare,
+            }),
+          }
+        );
 
-        if (telefoniDaAggiornare.length > 0) {
-          await Promise.all(
-            telefoniDaAggiornare.map((telefono) =>
-              prisma.telefono.update({
-                where: { id: telefono.id },
-                data: { value: telefono.value },
-              })
-            )
-          );
-        }
-
-        if (telefoniDaEliminare.length > 0) {
-          await prisma.telefono.deleteMany({
-            where: { id: { in: telefoniDaEliminare } },
-          });
-        }
+        if (!response.ok)
+          throw new Error("Errore durante l'aggiunta del job Telefono");
+        return "OK";
       });
     }
 
+    revalidatePath("/category/telefono");
     return "OK";
   } catch (error) {
     console.error("Errore durante l'importazione:", error);
@@ -578,57 +458,133 @@ export async function updateProcessFileSCP(
   try {
     console.log("Inizio elaborazione SCP per ", data.length, " persone");
 
-    const results = await Promise.all(
-      data.map(async (item) => {
-        try {
-          const idPersona = await prisma.persona.findFirst({
-            where: {
-              CF: item.CF,
-            },
-            select: {
-              id: true,
-            },
-          });
+    // Suddividi i record in blocchi da 100
+    const batchSize = 100;
+    const batches = [];
 
-          await prisma.cessionePignoramento.upsert({
-            where: {
-              id: item.CF,
-            },
-            create: {
-              id: item.CF,
-              cessione: item.C.toString(),
-              pignoramento: item.P.toString(),
-              scadenza_cessione: item.SC.toString(),
-              scadenza_pignoramento: item.SP.toString(),
-              personaID: idPersona?.id ?? "",
-            },
-            update: {
-              cessione: item.C.toString(),
-              pignoramento: item.P.toString(),
-              scadenza_cessione: item.SC.toString(),
-              scadenza_pignoramento: item.SP.toString(),
-              personaID: idPersona?.id ?? "",
-            },
-          });
-          console.log("SCP aggiornato per CF: ", item.CF);
-          return { success: true };
-        } catch (innerError) {
-          console.error(
-            "Errore durante l'aggiornamento SCP per CF: ",
-            item.CF,
-            innerError
-          );
-          return { success: false, error: innerError };
-        }
-      })
-    );
-
-    const hasErrors = results.some((result) => !result.success);
-
-    if (hasErrors) {
-      console.error("Elaborazione SCP completata con errori");
-      return "error";
+    // Suddividi i dati in batch
+    for (let i = 0; i < data.length; i += batchSize) {
+      batches.push(data.slice(i, i + batchSize));
     }
+
+    const dataOnlyCF: string[] = data.map((item) => item.CF);
+
+    const existingSCP = await prisma.cessionePignoramento.findMany({
+      where: {
+        personaID: {
+          in: dataOnlyCF,
+        },
+      },
+    });
+
+    // Esegui ogni batch come una transazione separata
+    for (const batch of batches) {
+      const recordsToCreate = [];
+      const recordsToUpdate = [];
+      for (const item of batch) {
+        // Verifica se il record esiste già
+        const existingRecord = existingSCP
+          .filter((el) => el.personaID === item.CF)
+          .at(0);
+
+        if (!existingRecord) {
+          // Se il record non esiste, aggiungilo all'array
+          recordsToCreate.push({
+            id: item.CF,
+            cessione: item.C.toString(),
+            pignoramento: item.P.toString(),
+            scadenza_cessione: item.SC.toString(),
+            scadenza_pignoramento: item.SP.toString(),
+            personaID: item.CF,
+          });
+        } else {
+          recordsToUpdate.push({
+            where: {
+              id: item.CF,
+            },
+            data: {
+              cessione: item.C.toString(),
+              pignoramento: item.P.toString(),
+              scadenza_cessione: item.SC.toString(),
+              scadenza_pignoramento: item.SP.toString(),
+              personaID: item.CF,
+            },
+          });
+        }
+      }
+
+      console.log("prima persona => ", recordsToCreate.at(0)?.id);
+
+      const response = await fetch(
+        "https://worker-gestionale-recupero-crediti.onrender.com/scp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recordsToCreate,
+            recordsToUpdate,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        console.log("response => ", response);
+        throw new Error("Errore durante l'aggiunta del SCP Create");
+      }
+      return "OK";
+    }
+
+    // const results = await Promise.all(
+    //   data.map(async (item) => {
+    //     try {
+    //       const idPersona = await prisma.persona.findFirst({
+    //         where: {
+    //           CF: item.CF,
+    //         },
+    //         select: {
+    //           id: true,
+    //         },
+    //       });
+
+    //       await prisma.cessionePignoramento.upsert({
+    //         where: {
+    //           id: item.CF,
+    //         },
+    //         create: {
+    //           id: item.CF,
+    //           cessione: item.C.toString(),
+    //           pignoramento: item.P.toString(),
+    //           scadenza_cessione: item.SC.toString(),
+    //           scadenza_pignoramento: item.SP.toString(),
+    //           personaID: idPersona?.id ?? "",
+    //         },
+    //         update: {
+    //           cessione: item.C.toString(),
+    //           pignoramento: item.P.toString(),
+    //           scadenza_cessione: item.SC.toString(),
+    //           scadenza_pignoramento: item.SP.toString(),
+    //           personaID: idPersona?.id ?? "",
+    //         },
+    //       });
+    //       console.log("SCP aggiornato per CF: ", item.CF);
+    //       return { success: true };
+    //     } catch (innerError) {
+    //       console.error(
+    //         "Errore durante l'aggiornamento SCP per CF: ",
+    //         item.CF,
+    //         innerError
+    //       );
+    //       return { success: false, error: innerError };
+    //     }
+    //   })
+    // );
+
+    // const hasErrors = results.some((result) => !result.success);
+
+    // if (hasErrors) {
+    //   console.error("Elaborazione SCP completata con errori");
+    //   return "error";
+    // }
 
     revalidatePath("/category/ultime-scp");
     console.log("Elaborazione SCP completata con successo");
@@ -656,38 +612,80 @@ export async function updateProcessFileABICAB(
   try {
     console.log("Inizio elaborazione ABICAB per ", data.length, " persone");
 
-    const results = await Promise.all(
-      data.map(async (item) => {
-        try {
-          const datore = await prisma.datore.findFirst({
-            where: {
-              CF: item.CF,
-            },
+    // Suddividi i record in blocchi da 100
+    const batchSize = 100;
+    const batches = [];
+    const recordsToCreate = [];
+    const recordsToUpdate = [];
+
+    // Suddividi i dati in batch
+    for (let i = 0; i < data.length; i += batchSize) {
+      batches.push(data.slice(i, i + batchSize));
+    }
+
+    const dataOnlyCF: string[] = data.map((item) => item.CF);
+
+    const existingABICAB = await prisma.abiCab.findMany({
+      where: {
+        id: {
+          in: dataOnlyCF,
+        },
+      },
+    });
+
+    const existingpersonas = await prisma.persona.findMany({
+      where: {
+        id: {
+          in: dataOnlyCF,
+        },
+      },
+      select: {
+        id: true,
+        CF: true,
+        idDatore: true,
+      },
+    });
+
+    // Esegui ogni batch come una transazione separata
+    for (const batch of batches) {
+      for (const item of batch) {
+        // Verifica se il record esiste già
+        const existingRecord = existingABICAB
+          .filter((el) => el.id === item.CF)
+          .at(0);
+
+        if (!existingRecord) {
+          //prendo idDatore da existingPersona
+          const datoreID = existingpersonas
+            .filter((el) => el.CF === item.CF)
+            .at(0)?.idDatore;
+          // Se il record non esiste, aggiungilo all'array
+          recordsToCreate.push({
+            ABI: [
+              item.ABI?.toString(),
+              item.ABI_1?.toString(),
+              item.ABI_2?.toString(),
+            ],
+            Anno: [
+              item.Anno?.toString(),
+              item.Anno_1?.toString(),
+              item.Anno_2?.toString(),
+            ],
+            CAB: [
+              item.CAB?.toString(),
+              item.CAB_1?.toString(),
+              item.CAB_2?.toString(),
+            ],
+            datoreID: datoreID,
+            personaID: item?.CF,
+            id: item.CF,
           });
-
-          console.log("datore ID =>", datore?.id);
-
-          const persona = datore
-            ? null
-            : await prisma.persona.findFirst({
-                where: {
-                  CF: item.CF,
-                },
-              });
-
-          console.log("persona ID =>", persona?.id);
-          console.log(
-            "ABICAB datore ID =>",
-            datore?.id
-              ? datore.id
-              : persona?.id ?? "34ca4cb7-4088-4cef-b7f5-3e448f7c8c77"
-          );
-
-          await prisma.abiCab.upsert({
+        } else {
+          recordsToUpdate.push({
             where: {
               id: item.CF,
             },
-            update: {
+            data: {
               ABI: [
                 item.ABI?.toString(),
                 item.ABI_1?.toString(),
@@ -703,48 +701,29 @@ export async function updateProcessFileABICAB(
                 item.CAB_1?.toString(),
                 item.CAB_2?.toString(),
               ],
-              datoreID: datore?.id,
-              personaID: persona?.id,
-            },
-            create: {
-              ABI: [
-                item.ABI?.toString(),
-                item.ABI_1?.toString(),
-                item.ABI_2?.toString(),
-              ],
-              Anno: [
-                item.Anno?.toString(),
-                item.Anno_1?.toString(),
-                item.Anno_2?.toString(),
-              ],
-              CAB: [
-                item.CAB?.toString(),
-                item.CAB_1?.toString(),
-                item.CAB_2?.toString(),
-              ],
-              datoreID: datore?.id,
-              personaID: persona?.id,
-              id: item.CF,
+              personaID: item?.CF,
             },
           });
-          console.log("ABICAB aggiornato per CF: ", item.CF);
-          return { success: true };
-        } catch (innerError) {
-          console.error(
-            "Errore durante l'aggiornamento ABICAB per CF: ",
-            item.CF,
-            innerError
-          );
-          return { success: false, error: innerError };
         }
-      })
-    );
+      }
 
-    const hasErrors = results.some((result) => !result.success);
+      const response = await fetch(
+        "https://worker-gestionale-recupero-crediti.onrender.com/AbiCab",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recordsToCreate,
+            recordsToUpdate,
+          }),
+        }
+      );
 
-    if (hasErrors) {
-      console.error("Elaborazione ABICAB completata con errori");
-      return "error";
+      if (!response.ok) {
+        console.log("response => ", response);
+        throw new Error("Errore durante l'aggiunta del ABICAB");
+      }
+      return "OK";
     }
 
     revalidatePath("/category/abicab");
@@ -761,45 +740,72 @@ export async function uploadCCFile(
 ) {
   try {
     console.log("Inizio upload conti correnti per ", data.length, " record");
+    // Suddividi i record in blocchi da 100
+    const batchSize = 100;
+    const batches = [];
 
-    const recordsToCreate = [];
+    // Suddividi i dati in batch
+    for (let i = 0; i < data.length; i += batchSize) {
+      batches.push(data.slice(i, i + batchSize));
+    }
 
-    for (const item of data) {
-      // Verifica se il record esiste già
-      const existingRecord = await prisma.contoCorrente.findFirst({
-        where: {
-          CF: item.CF,
-          banca: item.banca,
+    const dataOnlyCF: string[] = data.map((item) => item.CF);
+
+    const existingCC = await prisma.contoCorrente.findMany({
+      where: {
+        CF: {
+          in: dataOnlyCF,
         },
-      });
+      },
+    });
 
-      if (!existingRecord) {
-        // Se il record non esiste, aggiungilo all'array
-        recordsToCreate.push({
-          id: uuid_v4(),
-          banca: item.banca,
-          CF: item.CF,
-          nome: item.nome,
-        });
-      } else {
-        console.log(
-          "Conto corrente già esistente per CF: ",
-          item.CF,
-          ", Banca: ",
-          item.banca
+    // Esegui ogni batch come una transazione separata
+    for (const batch of batches) {
+      const recordsToCreate = [];
+      for (const item of batch) {
+        // Verifica se il record esiste già
+        const existingRecord = existingCC
+          .filter((el) => el.CF === item.CF)
+          .at(0);
+
+        if (!existingRecord) {
+          // Se il record non esiste, aggiungilo all'array
+          recordsToCreate.push({
+            id: uuid_v4(),
+            banca: item.banca,
+            CF: item.CF,
+            nome: item.nome,
+          });
+        } else {
+          console.log(
+            "Conto corrente già esistente per CF: ",
+            item.CF,
+            ", Banca: ",
+            item.banca
+          );
+        }
+      }
+
+      // console.log("recordsToCreate => ", recordsToCreate);
+      if (recordsToCreate.length > 0) {
+        const response = await fetch(
+          "https://worker-gestionale-recupero-crediti.onrender.com/contocorrente",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recordsToCreate,
+            }),
+          }
         );
+
+        if (!response.ok)
+          throw new Error("Errore durante l'aggiunta del job contocorrente");
+        // return "OK";
+      } else {
+        console.log("Nessun conto corrente da creare.");
       }
     }
-
-    if (recordsToCreate.length > 0) {
-      await prisma.contoCorrente.createMany({
-        data: recordsToCreate,
-      });
-      console.log("Creati ", recordsToCreate.length, " conti correnti");
-    } else {
-      console.log("Nessun conto corrente da creare.");
-    }
-
     revalidatePath("/category/cc");
 
     console.log("Upload conti correnti completato con successo");
