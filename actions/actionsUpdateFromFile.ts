@@ -738,8 +738,6 @@ export async function updateProcessFileABICAB(
     // Suddividi i record in blocchi da 100
     const batchSize = 100;
     const batches = [];
-    const recordsToCreate = [];
-    const recordsToUpdate = [];
 
     // Suddividi i dati in batch
     for (let i = 0; i < data.length; i += batchSize) {
@@ -771,6 +769,8 @@ export async function updateProcessFileABICAB(
 
     // Esegui ogni batch come una transazione separata
     for (const batch of batches) {
+      let recordsToCreate = [];
+      let recordsToUpdate = [];
       for (const item of batch) {
         // Verifica se il record esiste già
         const existingRecord = existingABICAB
@@ -782,6 +782,7 @@ export async function updateProcessFileABICAB(
           const datoreID = existingpersonas
             .filter((el) => el.CF === item.CF)
             .at(0)?.idDatore;
+
           // Se il record non esiste, aggiungilo all'array
           recordsToCreate.push({
             ABI: [
@@ -800,7 +801,7 @@ export async function updateProcessFileABICAB(
               item.CAB_2?.toString(),
             ],
             datoreID: datoreID?.at(0)?.id,
-            personaID: item?.CF,
+            personaID: item.CF,
             id: item.CF,
           });
         } else {
@@ -830,14 +831,42 @@ export async function updateProcessFileABICAB(
         }
       }
 
+      // Filtraggio dei record validi per personaID
+      const tuttiPersonaID = [
+        ...recordsToCreate.map((r) => r.personaID),
+        ...recordsToUpdate.map((r) => r.data.personaID),
+      ];
+
+      const personaIDsValidiNelDB = await prisma.persona.findMany({
+        where: {
+          id: { in: tuttiPersonaID },
+        },
+        select: { id: true },
+      });
+
+      const personaIDSet = new Set(personaIDsValidiNelDB.map((p) => p.id));
+
+      const recordsToCreateValidi = recordsToCreate.filter((record) =>
+        personaIDSet.has(record.personaID)
+      );
+
+      const recordsToUpdateValidi = recordsToUpdate.filter((record) =>
+        personaIDSet.has(record.data.personaID)
+      );
+
+      const scartati = recordsToCreate.filter(
+        (record) => !personaIDSet.has(record.personaID)
+      );
+      console.log("Record scartati per personaID non trovati:", scartati);
+
       const response = await fetch(
         "https://worker-gestionale-recupero-crediti.onrender.com/AbiCab",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            recordsToCreate,
-            recordsToUpdate,
+            recordsToCreate: recordsToCreateValidi,
+            recordsToUpdate: recordsToUpdateValidi,
           }),
         }
       );
@@ -846,7 +875,7 @@ export async function updateProcessFileABICAB(
         console.log("response => ", response);
         throw new Error("Errore durante l'aggiunta del ABICAB");
       }
-      return "OK";
+      // return "OK";
     }
 
     revalidatePath("/category/abicab");
