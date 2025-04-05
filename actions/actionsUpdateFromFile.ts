@@ -824,7 +824,7 @@ export async function updateProcessFileABICAB(
                 item.CAB_1?.toString(),
                 item.CAB_2?.toString(),
               ],
-              personaID: item?.CF,
+              personaID: item.CF,
             },
           });
         }
