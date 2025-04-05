@@ -575,17 +575,103 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   );
 }
 
+// export async function updateProcessFileSCP(
+//   data: { CF: string; C: string; SC: string; P: string; SP: string }[]
+// ) {
+//   try {
+//     console.log("Inizio elaborazione SCP per ", data.length, " persone");
+
+//     // Suddividi i record in blocchi da 100
+//     const batchSize = 100;
+//     const batches = [];
+
+//     // Suddividi i dati in batch
+//     for (let i = 0; i < data.length; i += batchSize) {
+//       batches.push(data.slice(i, i + batchSize));
+//     }
+
+//     const dataOnlyCF: string[] = data.map((item) => item.CF);
+
+//     const existingSCP = await prisma.cessionePignoramento.findMany({
+//       where: {
+//         personaID: {
+//           in: dataOnlyCF,
+//         },
+//       },
+//     });
+
+//     // Esegui ogni batch come una transazione separata
+//     for (const batch of batches) {
+//       const recordsToCreate = [];
+//       const recordsToUpdate = [];
+//       for (const item of batch) {
+//         // Verifica se il record esiste già
+//         const existingRecord = existingSCP
+//           .filter((el) => el.personaID === item.CF)
+//           .at(0);
+
+//         if (!existingRecord) {
+//           // Se il record non esiste, aggiungilo all'array
+//           recordsToCreate.push({
+//             id: item.CF,
+//             cessione: item.C.toString(),
+//             pignoramento: item.P.toString(),
+//             scadenza_cessione: item.SC.toString(),
+//             scadenza_pignoramento: item.SP.toString(),
+//             personaID: item.CF,
+//           });
+//         } else {
+//           recordsToUpdate.push({
+//             where: {
+//               id: item.CF,
+//             },
+//             data: {
+//               cessione: item.C.toString(),
+//               pignoramento: item.P.toString(),
+//               scadenza_cessione: item.SC.toString(),
+//               scadenza_pignoramento: item.SP.toString(),
+//               personaID: item.CF,
+//             },
+//           });
+//         }
+//       }
+
+//       const response = await fetch(
+//         "https://worker-gestionale-recupero-crediti.onrender.com/scp",
+//         {
+//           method: "POST",
+//           headers: { "Content-Type": "application/json" },
+//           body: JSON.stringify({
+//             recordsToCreate,
+//             recordsToUpdate,
+//           }),
+//         }
+//       );
+
+//       if (!response.ok) {
+//         console.log("response => ", response);
+//         throw new Error("Errore durante l'aggiunta del SCP Create");
+//       }
+//       // return "OK";
+//     }
+
+//     revalidatePath("/category/ultime-scp");
+//     console.log("Elaborazione SCP completata con successo");
+//     return "OK";
+//   } catch (error) {
+//     console.error("Errore generale durante l'elaborazione SCP: ", error);
+//     return "error";
+//   }
+// }
+
 export async function updateProcessFileSCP(
   data: { CF: string; C: string; SC: string; P: string; SP: string }[]
 ) {
   try {
     console.log("Inizio elaborazione SCP per ", data.length, " persone");
 
-    // Suddividi i record in blocchi da 100
     const batchSize = 100;
     const batches = [];
-
-    // Suddividi i dati in batch
     for (let i = 0; i < data.length; i += batchSize) {
       batches.push(data.slice(i, i + batchSize));
     }
@@ -600,114 +686,77 @@ export async function updateProcessFileSCP(
       },
     });
 
-    // Esegui ogni batch come una transazione separata
+    // 🔍 Recupera tutti i personaID validi esistenti in Persona
+    const validPersonaIDsInDB = await prisma.persona.findMany({
+      where: {
+        id: {
+          in: dataOnlyCF,
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    const personaIDSet = new Set(validPersonaIDsInDB.map((p) => p.id));
+
     for (const batch of batches) {
       const recordsToCreate = [];
       const recordsToUpdate = [];
+
       for (const item of batch) {
-        // Verifica se il record esiste già
-        const existingRecord = existingSCP
-          .filter((el) => el.personaID === item.CF)
-          .at(0);
+        const personaID = item.CF;
+
+        // ❌ Skippa se personaID non è valido
+        if (!personaIDSet.has(personaID)) continue;
+
+        const existingRecord = existingSCP.find(
+          (el) => el.personaID === personaID
+        );
 
         if (!existingRecord) {
-          // Se il record non esiste, aggiungilo all'array
           recordsToCreate.push({
             id: item.CF,
             cessione: item.C.toString(),
             pignoramento: item.P.toString(),
             scadenza_cessione: item.SC.toString(),
             scadenza_pignoramento: item.SP.toString(),
-            personaID: item.CF,
+            personaID: personaID,
           });
         } else {
           recordsToUpdate.push({
-            where: {
-              id: item.CF,
-            },
+            where: { id: item.CF },
             data: {
               cessione: item.C.toString(),
               pignoramento: item.P.toString(),
               scadenza_cessione: item.SC.toString(),
               scadenza_pignoramento: item.SP.toString(),
-              personaID: item.CF,
+              personaID: personaID,
             },
           });
         }
       }
 
-      console.log("prima persona => ", recordsToCreate.at(0)?.id);
+      // 🔥 Fai la fetch solo se hai record validi
+      if (recordsToCreate.length > 0 || recordsToUpdate.length > 0) {
+        const response = await fetch(
+          "https://worker-gestionale-recupero-crediti.onrender.com/scp",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              recordsToCreate,
+              recordsToUpdate,
+            }),
+          }
+        );
 
-      const response = await fetch(
-        "https://worker-gestionale-recupero-crediti.onrender.com/scp",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recordsToCreate,
-            recordsToUpdate,
-          }),
+        if (!response.ok) {
+          console.log("response => ", response);
+          throw new Error("Errore durante l'aggiunta del SCP Create");
         }
-      );
-
-      if (!response.ok) {
-        console.log("response => ", response);
-        throw new Error("Errore durante l'aggiunta del SCP Create");
       }
-      return "OK";
     }
-
-    // const results = await Promise.all(
-    //   data.map(async (item) => {
-    //     try {
-    //       const idPersona = await prisma.persona.findFirst({
-    //         where: {
-    //           CF: item.CF,
-    //         },
-    //         select: {
-    //           id: true,
-    //         },
-    //       });
-
-    //       await prisma.cessionePignoramento.upsert({
-    //         where: {
-    //           id: item.CF,
-    //         },
-    //         create: {
-    //           id: item.CF,
-    //           cessione: item.C.toString(),
-    //           pignoramento: item.P.toString(),
-    //           scadenza_cessione: item.SC.toString(),
-    //           scadenza_pignoramento: item.SP.toString(),
-    //           personaID: idPersona?.id ?? "",
-    //         },
-    //         update: {
-    //           cessione: item.C.toString(),
-    //           pignoramento: item.P.toString(),
-    //           scadenza_cessione: item.SC.toString(),
-    //           scadenza_pignoramento: item.SP.toString(),
-    //           personaID: idPersona?.id ?? "",
-    //         },
-    //       });
-    //       console.log("SCP aggiornato per CF: ", item.CF);
-    //       return { success: true };
-    //     } catch (innerError) {
-    //       console.error(
-    //         "Errore durante l'aggiornamento SCP per CF: ",
-    //         item.CF,
-    //         innerError
-    //       );
-    //       return { success: false, error: innerError };
-    //     }
-    //   })
-    // );
-
-    // const hasErrors = results.some((result) => !result.success);
-
-    // if (hasErrors) {
-    //   console.error("Elaborazione SCP completata con errori");
-    //   return "error";
-    // }
 
     revalidatePath("/category/ultime-scp");
     console.log("Elaborazione SCP completata con successo");
