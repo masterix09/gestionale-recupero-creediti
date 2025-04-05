@@ -799,7 +799,7 @@ export async function updateProcessFileABICAB(
               item.CAB_1?.toString(),
               item.CAB_2?.toString(),
             ],
-            datoreID: datoreID,
+            datoreID: datoreID?.at(0)?.id,
             personaID: item?.CF,
             id: item.CF,
           });
