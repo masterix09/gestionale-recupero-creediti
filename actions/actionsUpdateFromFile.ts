@@ -166,14 +166,6 @@ export async function addDataToDatore(data: TData[]) {
         }
       }
 
-      console.log("faccio la chiamata");
-      console.log("recdords to create length => ", recordsToCreate.length);
-
-      console.log(
-        "create ids => ",
-        recordsToCreate.map((item) => item.id)
-      );
-
       const response = await fetch(
         "https://worker-gestionale-recupero-crediti.onrender.com/datore",
         {
