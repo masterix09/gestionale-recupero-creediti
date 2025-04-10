@@ -21,7 +21,7 @@ export default async function Page({ params }: { params: { id: string } }) {
     return (
       <div className="w-[90%] md:w-[80%] mx-auto min-h-screen">
         <h3 className="text-white uppercase font-bold text-2xl mb-5">
-          Tabella SCP
+          Tabella CC
         </h3>
 
         <Table className="rounded-md border-2 border-slate-200">

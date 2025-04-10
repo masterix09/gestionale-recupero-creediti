@@ -5,7 +5,7 @@ import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { v4 as uuid_v4 } from "uuid";
 
-type TData = {
+export type TData = {
   CF: string;
   PIVA: string;
   nome: string;
@@ -38,7 +38,7 @@ type TData = {
   }[];
 };
 
-interface TelefonoInput {
+export interface TelefonoInput {
   CF: string;
   Tel1: string;
   Tel2: string;
@@ -48,7 +48,7 @@ interface TelefonoInput {
   Tel6: string;
 }
 
-type PersonaInput = {
+export type PersonaInput = {
   CF: string; // Codice Fiscale (usato anche come ID)
   PIVA: string; // Partita IVA
   Nome: string; // Cognome o Ragione Sociale
@@ -100,11 +100,6 @@ export async function addDataToDatore(data: TData[]) {
       const recordsToUpdate = [];
       for (const item of batch) {
         for (const element of item.datore) {
-          // Verifica se il record esiste già
-          const existingRecord = existingDatore
-            .filter((el) => el.personaID === item.CF)
-            .at(0);
-
           const {
             cap,
             comune,
@@ -123,10 +118,15 @@ export async function addDataToDatore(data: TData[]) {
             cfdatore,
           } = element;
 
+          // Verifica se il record esiste già
+          const existingRecord = existingDatore.find(
+            (el) => el.personaID === cfPersona && el.CF === cfdatore
+          );
+
           if (!existingRecord) {
             // Se il record non esiste, aggiungilo all'array
             recordsToCreate.push({
-              id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
+              id: `${cfdatore.toString()}-${cfPersona ?? "UNKNOW"}`,
               cap: cap?.toString() ?? "",
               CF: cfdatore?.toString() ?? "",
               comune,
@@ -160,11 +160,20 @@ export async function addDataToDatore(data: TData[]) {
                 tipo,
                 tipologia_contratto: partTime?.toString(),
                 via,
+                personaID: cfPersona,
               },
             });
           }
         }
       }
+
+      console.log("recordsToCreate => ", recordsToCreate);
+      console.log(
+        "recordsToUpdate => ",
+        recordsToUpdate.filter(
+          (item) => item.data.personaID === "MLTTZN69T50H501G"
+        )
+      );
 
       const response = await fetch(
         "https://worker-gestionale-recupero-crediti.onrender.com/datore",
@@ -321,6 +330,14 @@ export async function addDataToDatore(data: TData[]) {
 //   }
 // }
 
+function aggiungiSeNonPresente(
+  array: string[] | null | undefined,
+  valore: string
+): string[] {
+  if (!array || array.length === 0) return [valore];
+  return array.includes(valore) ? array : [...array, valore];
+}
+
 export async function importaPersone(personeInput: PersonaInput[]) {
   try {
     const batchSize = 100;
@@ -361,42 +378,59 @@ export async function importaPersone(personeInput: PersonaInput[]) {
           provincia_nascita: personaInput.ProvinciaNascita.toString(),
           data_nascita: personaInput.DataNascita.toString(),
           data_morte: personaInput.DataMorte.toString(),
-          via: personaEsistente
-            ? personaEsistente?.via?.length > 0
-              ? personaEsistente.via.at(personaEsistente.via.length) ===
-                personaInput.Via.toString()
-                ? personaEsistente.via
-                : [...personaEsistente?.via, personaInput.Via.toString()]
-              : [personaInput.Via.toString()]
-            : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
-          cap: personaEsistente
-            ? personaEsistente?.cap?.length > 0
-              ? personaEsistente.cap.at(personaEsistente.cap.length) ===
-                personaInput.Cap.toString()
-                ? personaEsistente.cap
-                : [...personaEsistente?.cap, personaInput.Cap.toString()]
-              : [personaInput.Cap.toString()]
-            : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
-          comune: personaEsistente
-            ? personaEsistente?.comune?.length > 0
-              ? personaEsistente.comune.at(personaEsistente.comune.length) ===
-                personaInput.Comune.toString()
-                ? personaEsistente.comune
-                : [...personaEsistente?.comune, personaInput.Comune.toString()]
-              : [personaInput.Comune.toString()]
-            : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
-          provincia: personaEsistente
-            ? personaEsistente?.provincia?.length > 0
-              ? personaEsistente.provincia.at(
-                  personaEsistente.provincia.length
-                ) === personaInput.Provincia.toString()
-                ? personaEsistente.provincia
-                : [
-                    ...personaEsistente?.provincia,
-                    personaInput.Provincia.toString(),
-                  ]
-              : [personaInput.Provincia.toString()]
-            : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+          // via: personaEsistente
+          //   ? personaEsistente?.via?.length > 0
+          //     ? personaEsistente.via.at(personaEsistente.via.length) ===
+          //       personaInput.Via.toString()
+          //       ? personaEsistente.via
+          //       : [...personaEsistente?.via, personaInput.Via.toString()]
+          //     : [personaInput.Via.toString()]
+          //   : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
+          // cap: personaEsistente
+          //   ? personaEsistente?.cap?.length > 0
+          //     ? personaEsistente.cap.at(personaEsistente.cap.length) ===
+          //       personaInput.Cap.toString()
+          //       ? personaEsistente.cap
+          //       : [...personaEsistente?.cap, personaInput.Cap.toString()]
+          //     : [personaInput.Cap.toString()]
+          //   : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
+          // comune: personaEsistente
+          //   ? personaEsistente?.comune?.length > 0
+          //     ? personaEsistente.comune.at(personaEsistente.comune.length) ===
+          //       personaInput.Comune.toString()
+          //       ? personaEsistente.comune
+          //       : [...personaEsistente?.comune, personaInput.Comune.toString()]
+          //     : [personaInput.Comune.toString()]
+          //   : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
+          // provincia: personaEsistente
+          //   ? personaEsistente?.provincia?.length > 0
+          //     ? personaEsistente.provincia.at(
+          //         personaEsistente.provincia.length
+          //       ) === personaInput.Provincia.toString()
+          //       ? personaEsistente.provincia
+          //       : [
+          //           ...personaEsistente?.provincia,
+          //           personaInput.Provincia.toString(),
+          //         ]
+          //     : [personaInput.Provincia.toString()]
+          //   : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
+
+          via: aggiungiSeNonPresente(
+            personaEsistente?.via,
+            personaInput.Via.toString()
+          ),
+          cap: aggiungiSeNonPresente(
+            personaEsistente?.cap,
+            personaInput.Cap.toString()
+          ),
+          comune: aggiungiSeNonPresente(
+            personaEsistente?.comune,
+            personaInput.Comune.toString()
+          ),
+          provincia: aggiungiSeNonPresente(
+            personaEsistente?.provincia,
+            personaInput.Provincia.toString()
+          ),
         };
 
         if (personaEsistente) {
