@@ -126,7 +126,7 @@ export async function addDataToDatore(data: TData[]) {
           if (!existingRecord) {
             // Se il record non esiste, aggiungilo all'array
             recordsToCreate.push({
-              id: `${cfdatore.toString()}-${cfPersona ?? "UNKNOW"}`,
+              id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
               cap: cap?.toString() ?? "",
               CF: cfdatore?.toString() ?? "",
               comune,
