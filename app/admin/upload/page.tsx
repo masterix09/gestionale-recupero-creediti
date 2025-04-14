@@ -229,21 +229,27 @@ export default function Page() {
           };
         });
 
-        // const res = await importaPersone(data);
+        // INIZIO DIVISIONE IN BATCH
+        const batchSize = 100;
+        let batch;
 
-        const res = await importaPersone(data);
+        for (let i = 0; i < data.length; i += batchSize) {
+          batch = data.slice(i, i + batchSize);
 
-        if (res === "OK") {
-          toast({
-            title: "Successo!",
-            description: "Operazione avvenuta con successo",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Ops! Errore!",
-            description: "Errore operazione. Riprova!",
-          });
+          const res = await importaPersone(batch);
+
+          if (res === "OK") {
+            toast({
+              title: "Successo!",
+              description: "Operazione avvenuta con successo",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Ops! Errore!",
+              description: "Errore operazione. Riprova!",
+            });
+          }
         }
       };
     }
