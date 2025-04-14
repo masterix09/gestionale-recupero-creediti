@@ -18,7 +18,7 @@ const Navbar = async () => {
       <div className="w-full lg:w-[80%] mx-auto flex justify-between items-center">
         <Link href="/">
           <h3 className="text-xl font-semibold text-white">
-            Gestione recupero crediti
+            Gestione informazione OSINT
           </h3>
         </Link>
         <div className="flex gap-x-3 justify-center items-center">

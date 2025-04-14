@@ -253,43 +253,6 @@ export async function importaPersone(personeInput: PersonaInput[]) {
         provincia_nascita: personaInput.ProvinciaNascita.toString(),
         data_nascita: personaInput.DataNascita.toString(),
         data_morte: personaInput.DataMorte.toString(),
-        // via: personaEsistente
-        //   ? personaEsistente?.via?.length > 0
-        //     ? personaEsistente.via.at(personaEsistente.via.length) ===
-        //       personaInput.Via.toString()
-        //       ? personaEsistente.via
-        //       : [...personaEsistente?.via, personaInput.Via.toString()]
-        //     : [personaInput.Via.toString()]
-        //   : [personaInput.Via.toString()], // supponiamo che sia una lista di vie
-        // cap: personaEsistente
-        //   ? personaEsistente?.cap?.length > 0
-        //     ? personaEsistente.cap.at(personaEsistente.cap.length) ===
-        //       personaInput.Cap.toString()
-        //       ? personaEsistente.cap
-        //       : [...personaEsistente?.cap, personaInput.Cap.toString()]
-        //     : [personaInput.Cap.toString()]
-        //   : [personaInput.Cap.toString()], // supponiamo che sia una lista di CAP
-        // comune: personaEsistente
-        //   ? personaEsistente?.comune?.length > 0
-        //     ? personaEsistente.comune.at(personaEsistente.comune.length) ===
-        //       personaInput.Comune.toString()
-        //       ? personaEsistente.comune
-        //       : [...personaEsistente?.comune, personaInput.Comune.toString()]
-        //     : [personaInput.Comune.toString()]
-        //   : [personaInput.Comune.toString()], // supponiamo che sia una lista di comuni
-        // provincia: personaEsistente
-        //   ? personaEsistente?.provincia?.length > 0
-        //     ? personaEsistente.provincia.at(
-        //         personaEsistente.provincia.length
-        //       ) === personaInput.Provincia.toString()
-        //       ? personaEsistente.provincia
-        //       : [
-        //           ...personaEsistente?.provincia,
-        //           personaInput.Provincia.toString(),
-        //         ]
-        //     : [personaInput.Provincia.toString()]
-        //   : [personaInput.Provincia.toString()], // supponiamo che sia una lista di province
-
         via: aggiungiSeNonPresente(
           personaEsistente?.via,
           personaInput.Via.toString()
@@ -324,17 +287,35 @@ export async function importaPersone(personeInput: PersonaInput[]) {
     // const controller = new AbortController();
     // const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
+    // const response = await fetch(
+    //   "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
+    //   {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     // signal: controller.signal,
+    //     body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
+    //   }
+    // );
+
+    // // clearTimeout(timeout);
+
+    // if (!response.ok) {
+    //   const errorText = await response.text();
+    //   console.error("Errore durante fetch:", response.status, errorText);
+    //   throw new Error("Errore durante l'aggiunta del job Anagrafica");
+    // }
+
+    // revalidatePath("/category/anagrafica");
+    // return "OK";
+
     const response = await fetch(
       "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // signal: controller.signal,
         body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
       }
     );
-
-    // clearTimeout(timeout);
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -342,11 +323,23 @@ export async function importaPersone(personeInput: PersonaInput[]) {
       throw new Error("Errore durante l'aggiunta del job Anagrafica");
     }
 
+    const result = await response.json();
+
     revalidatePath("/category/anagrafica");
-    return "OK";
+
+    return {
+      status: "ok",
+      inseriti: result.inseriti,
+      aggiornati: result.aggiornati,
+      duplicati: result.duplicati,
+    };
   } catch (error) {
     console.error("Errore durante l'importazione delle persone:", error);
-    return "errore";
+    // return "errore";
+
+    return {
+      status: "errore",
+    };
   }
 }
 

@@ -231,26 +231,30 @@ export default function Page() {
 
         // INIZIO DIVISIONE IN BATCH
         const batchSize = 100;
-        let batch;
+        let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
 
         for (let i = 0; i < data.length; i += batchSize) {
-          batch = data.slice(i, i + batchSize);
+          const batch = data.slice(i, i + batchSize);
 
           const res = await importaPersone(batch);
 
-          if (res === "OK") {
-            toast({
-              title: "Successo!",
-              description: "Operazione avvenuta con successo",
-            });
+          if (res?.status === "ok") {
+            total.inseriti += res.inseriti;
+            total.aggiornati += res.aggiornati;
+            total.duplicati += res.duplicati;
           } else {
             toast({
               variant: "destructive",
-              title: "Ops! Errore!",
-              description: "Errore operazione. Riprova!",
+              title: "Errore!",
+              description: "Errore durante l'importazione.",
             });
           }
         }
+
+        toast({
+          title: "✅ Importazione completata",
+          description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
+        });
       };
     }
 

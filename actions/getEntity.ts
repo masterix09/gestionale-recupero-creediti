@@ -6,6 +6,17 @@ import { unstable_noStore } from "next/cache";
 export async function useGetEntity(prevState: any, formData: FormData) {
   unstable_noStore(); // Disabilita la cache per questa server action
 
+  if (formData.get("text")?.toString() === "")
+    return [
+      {
+        id: "",
+        CF: "",
+        PIVA: "",
+        nome: "",
+        cognome: "",
+      },
+    ];
+
   const data = await prisma.persona.findMany({
     where: {
       // CF: formData.get("text")?.toString(),
