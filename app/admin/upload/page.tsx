@@ -392,6 +392,7 @@ export default function Page() {
         });
 
         // console.log("data => ", data);
+        console.log("invio dati a server actions");
         const res = await addDataToDatore(data);
 
         if (res === "OK") {

@@ -340,6 +340,7 @@ function aggiungiSeNonPresente(
 
 export async function importaPersone(personeInput: PersonaInput[]) {
   try {
+    console.log("inizio uplaod")
     const batchSize = 100;
 
     for (let i = 0; i < personeInput.length; i += batchSize) {
@@ -446,20 +447,20 @@ export async function importaPersone(personeInput: PersonaInput[]) {
       // --- 4. Effettua la chiamata esterna fuori dalla transazione
       console.log("faccio la chiamata");
 
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      // const controller = new AbortController();
+      // const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
       const response = await fetch(
         "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          signal: controller.signal,
+          // signal: controller.signal,
           body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
         }
       );
 
-      clearTimeout(timeout);
+      // clearTimeout(timeout);
 
       if (!response.ok) {
         const errorText = await response.text();
