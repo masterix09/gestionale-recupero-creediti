@@ -66,23 +66,23 @@ export type PersonaInput = {
 
 export async function addDataToDatore(data: TData[]) {
   try {
-    console.log("Inizio elaborazione di ", data.length, " persone");
+    // console.log("Inizio elaborazione di ", data.length, " persone");
 
-    console.log(
-      "Numero di datori ",
-      data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
-    );
+    // console.log(
+    //   "Numero di datori ",
+    //   data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
+    // );
 
-    // Suddividi i record in blocchi da 100
-    const batchSize = 25;
-    const batches = [];
+    // // Suddividi i record in blocchi da 100
+    // const batchSize = 25;
+    // const batches = [];
 
-    // Suddividi i dati in batch
-    for (let i = 0; i < data.length; i += batchSize) {
-      batches.push(data.slice(i, i + batchSize));
-    }
+    // // Suddividi i dati in batch
+    // for (let i = 0; i < data.length; i += batchSize) {
+    //   batches.push(data.slice(i, i + batchSize));
+    // }
 
-    console.log("batches => ", batches.length);
+    // console.log("batches => ", batches.length);
 
     const dataOnlyCF: string[] = data.map((item) => item.CF);
 
@@ -95,10 +95,10 @@ export async function addDataToDatore(data: TData[]) {
     });
 
     // Esegui ogni batch come una transazione separata
-    for (const batch of batches) {
+    // for (const batch of batches) {
       const recordsToCreate = [];
       const recordsToUpdate = [];
-      for (const item of batch) {
+      for (const item of data) {
         for (const element of item.datore) {
           const {
             cap,
@@ -167,13 +167,13 @@ export async function addDataToDatore(data: TData[]) {
         }
       }
 
-      console.log("recordsToCreate => ", recordsToCreate);
-      console.log(
-        "recordsToUpdate => ",
-        recordsToUpdate.filter(
-          (item) => item.data.personaID === "MLTTZN69T50H501G"
-        )
-      );
+      // console.log("recordsToCreate => ", recordsToCreate);
+      // console.log(
+      //   "recordsToUpdate => ",
+      //   recordsToUpdate.filter(
+      //     (item) => item.data.personaID === "MLTTZN69T50H501G"
+      //   )
+      // );
 
       const response = await fetch(
         "https://worker-gestionale-recupero-crediti.onrender.com/datore",
@@ -188,20 +188,29 @@ export async function addDataToDatore(data: TData[]) {
       );
 
       if (!response.ok) {
-        console.log(response);
-        throw new Error("Errore durante l'aggiunta del Datore Create");
+        const errorText = await response.text();
+        console.error("Errore durante fetch:", response.status, errorText);
+        throw new Error("Errore durante l'aggiunta del job Datore");
       }
-      // return "OK";
+  
+      const result = await response.json();
+  
+      revalidatePath("/category/datore");
+  
+      return {
+        status: "ok",
+        inseriti: result.inseriti,
+        aggiornati: result.aggiornati,
+        duplicati: result.duplicati,
+      };
+    } catch (error) {
+      console.error("Errore durante l'importazione dei datore:", error);
+      // return "errore";
+  
+      return {
+        status: "errore",
+      };
     }
-
-    revalidatePath(`/category/lavoro`);
-
-    console.log("Elaborazione completata con successo");
-    return "OK";
-  } catch (error) {
-    console.error("Errore generale durante l'elaborazione: ", error);
-    return "error";
-  }
 }
 
 function aggiungiSeNonPresente(

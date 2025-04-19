@@ -36,150 +36,6 @@ export default function Page() {
   };
 
   // @ts-ignore
-  // const handleFileAnagrafica = (e) => {
-  //   console.log("dentro funzione");
-  //   setIspending(true);
-  //   const file = e.target.files[0];
-  //   if (!file) return;
-
-  //   if (isExcelFile(file) && file.size !== 0) {
-  //     const reader = new FileReader();
-  //     reader.readAsArrayBuffer(file);
-  //     reader.onload = async (e) => {
-  //       const data1 = e?.target?.result;
-  //       const workbook = XLSX.read(data1, { type: "array" });
-  //       const sheetName = workbook.SheetNames[0];
-  //       const worksheet = workbook.Sheets[sheetName];
-
-  //       const blockSize = 100;
-  //       let startRow = 2;
-  //       let endRow = startRow + blockSize - 1;
-
-  //       // Converte il foglio in formato JSON
-  //       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-
-  //       // Numero di righe (escludendo eventuale intestazione)
-  //       const rowCount = jsonData.length - 1;
-
-  //       console.log("nuemro ", rowCount);
-
-  //       while (startRow <= rowCount) {
-  //         console.log("inizio");
-  //         console.log("startRow => ", startRow);
-  //         console.log("endRow => ", endRow);
-
-  //         // Assicurati che endRow non superi rowCount
-  //         const actualEndRow = Math.min(endRow, rowCount);
-
-  //         const range = XLSX.utils.encode_range({
-  //           s: { r: startRow - 1, c: 0 },
-  //           e: { r: actualEndRow - 1, c: 19 }, // Usa actualEndRow
-  //         });
-
-  //         const blockData = XLSX.utils.sheet_to_json(worksheet, {
-  //           header: 1,
-  //           range: range,
-  //           defval: "",
-  //         }) as any[][];
-
-  //         if (blockData.length === 0) {
-  //           break;
-  //         }
-
-  //         console.log("blockData ===> ", blockData);
-
-  //         const data = blockData.map((row: any[]) => {
-  //           const CF = row[0] as string;
-  //           const PIVA = row[2] as string;
-  //           const nome = row[4] as string;
-  //           const cognome = row[3] as string;
-  //           const sesso = row[5] as string;
-  //           const comune_nascita = row[7] as string;
-  //           const provincia_nascita = row[6] as string;
-  //           const data_nascita = row[8] as string;
-  //           const data_morte = row[9] as string;
-  //           const via = row[10] as string;
-  //           const cap = row[11] as string;
-  //           const comune = row[12] as string;
-  //           const provincia = row[13] as string;
-
-  //           const totalColumn = row.length;
-  //           const totalColumnDatore = totalColumn - 14;
-  //           const counterRowDatore = totalColumnDatore / 16;
-
-  //           const arrDatore = Array.from(
-  //             { length: counterRowDatore },
-  //             (_, index) => {
-  //               const suffix = index === 0 ? "" : `_${index}`;
-  //               const suffixPlusOne = index === 0 ? "_1" : `_${index + 1}`;
-
-  //               return {
-  //                 cfPersona: CF,
-  //                 cfdatore: row[13 + index * 16] as string,
-  //                 tipo: row[14 + index * 16] as string,
-  //                 reddito: row[15 + index * 16] as string,
-  //                 mese: row[16 + index * 16] as string,
-  //                 partTime: row[17 + index * 16] as string,
-  //                 inizio: row[18 + index * 16] as string,
-  //                 fine: row[19 + index * 16] as string,
-  //                 piva: row[20 + index * 16] as string,
-  //                 ragioneSociale: row[21 + index * 16] as string,
-  //                 nome: row[22 + index * 16] as string,
-  //                 via: row[23 + index * 16] as string,
-  //                 cap: row[24 + index * 16] as string,
-  //                 comune: row[25 + index * 16] as string,
-  //                 provincia: row[26 + index * 16] as string,
-  //               };
-  //             }
-  //           );
-
-  //           return {
-  //             CF: CF,
-  //             PIVA: PIVA,
-  //             nome: nome,
-  //             cognome: cognome,
-  //             sesso: sesso,
-  //             comune_nascita: comune_nascita,
-  //             provincia_nascita: provincia_nascita,
-  //             data_nascita: data_nascita,
-  //             data_morte: data_morte,
-  //             via: via,
-  //             cap: cap,
-  //             comune: comune,
-  //             provincia: provincia,
-  //             datore: arrDatore,
-  //           };
-  //         });
-
-  //         console.log("data ===> ", data);
-
-  //         const res = await updateProcessFile(data);
-
-  //         if (res === "OK") {
-  //           toast({
-  //             title: "Successo!",
-  //             description: "Operazione avvenuta con successo",
-  //           });
-  //         } else {
-  //           toast({
-  //             variant: "destructive",
-  //             title: "Ops ! Errore!",
-  //             description: "Errore operazione. Riprova!",
-  //           });
-  //         }
-
-  //         startRow = endRow + 1;
-  //         endRow = startRow + blockSize - 1;
-  //         console.log("startRow => ", startRow);
-  //         console.log("endRow => ", endRow);
-  //       }
-
-  //       setIspending(false);
-  //     };
-  //   }
-  // };
-
-  // @ts-ignore
   const handleFilePersona = (e) => {
     setIspending(true);
 
@@ -401,22 +257,41 @@ export default function Page() {
           };
         });
 
-        // console.log("data => ", data);
-        console.log("invio dati a server actions");
-        const res = await addDataToDatore(data);
+        console.log("Inizio elaborazione di ", data.length, " persone");
 
-        if (res === "OK") {
+        console.log(
+          "Numero di datori ",
+          data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
+        );
+    
+        // Suddividi i record in blocchi da 25
+        const batchSize = 25;
+        let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
+    
+        // Suddividi i dati in batch
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const res = await addDataToDatore(batch);
+          
+          if (res?.status === "ok") {
+            total.inseriti += res.inseriti;
+            total.aggiornati += res.aggiornati;
+            total.duplicati += res.duplicati;
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Errore!",
+              description: "Errore durante l'importazione.",
+            });
+          }
+
           toast({
-            title: "Successo!",
-            description: "Operazione avvenuta con successo",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Ops ! Errore!",
-            description: "Errore operazione. Riprova!",
+            title: "✅ Importazione completata",
+            description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
           });
         }
+        
+
       };
     }
 
