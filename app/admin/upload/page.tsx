@@ -404,19 +404,31 @@ export default function Page() {
             SP: item[`SP`] as string,
           };
         });
-        const res = await updateProcessFileSCP(data);
-        if (res === "OK") {
-          toast({
-            title: "Successo!",
-            description: "Operazione avvenuta con successo",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Ops ! Errore!",
-            description: "Errore operazione. Riprova!",
-          });
+
+        // INIZIO DIVISIONE IN BATCH
+        const batchSize = 100;
+        let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
+
+        for (let i = 0; i < data.length; i += batchSize) {
+          const batch = data.slice(i, i + batchSize);
+          const res = await updateProcessFileSCP(batch);
+          if (res?.status === "ok") {
+            total.inseriti += res.inseriti;
+            total.aggiornati += res.aggiornati;
+            total.duplicati += res.duplicati;
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Errore!",
+              description: "Errore durante l'importazione.",
+            });
+          }
         }
+
+        toast({
+          title: "✅ Importazione completata",
+          description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
+        });
       };
     }
     setIspending(false);
