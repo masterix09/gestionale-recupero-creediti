@@ -51,7 +51,9 @@ export default function Page() {
         const workbook = XLSX.read(data1, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
+        console.log("sheet => ", sheet);
         const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        console.log("parsedData => ", parsedData);
 
         // Trasforma i dati per passarli alla server action
         const data = parsedData.map((item) => {
@@ -89,23 +91,23 @@ export default function Page() {
         const batchSize = 100;
         let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
 
-        for (let i = 0; i < data.length; i += batchSize) {
-          const batch = data.slice(i, i + batchSize);
+        // for (let i = 0; i < data.length; i += batchSize) {
+        //   const batch = data.slice(i, i + batchSize);
 
-          const res = await importaPersone(batch);
+        //   const res = await importaPersone(batch);
 
-          if (res?.status === "ok") {
-            total.inseriti += res.inseriti;
-            total.aggiornati += res.aggiornati;
-            total.duplicati += res.duplicati;
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Errore!",
-              description: "Errore durante l'importazione.",
-            });
-          }
-        }
+        //   if (res?.status === "ok") {
+        //     total.inseriti += res.inseriti;
+        //     total.aggiornati += res.aggiornati;
+        //     total.duplicati += res.duplicati;
+        //   } else {
+        //     toast({
+        //       variant: "destructive",
+        //       title: "Errore!",
+        //       description: "Errore durante l'importazione.",
+        //     });
+        //   }
+        // }
 
         toast({
           title: "✅ Importazione completata",
@@ -120,159 +122,140 @@ export default function Page() {
   // @ts-ignore
   const handleFileAnagraficaLavoro = (e) => {
     setIspending(true);
-    // console.log(e);
+  
     const file = e.target.files[0];
-    // console.log(file);
-
+  
     if (!file) return;
-
+  
     if (isExcelFile(file) && file.size !== 0) {
       const reader = new FileReader();
       reader.readAsArrayBuffer(file);
       reader.onload = async (e) => {
-        // @ts-ignore
-        const data1 = e.target.result;
-        const workbook = XLSX.read(data1, { type: "binary" });
+        const data1 = e?.target?.result;
+        console.log("data1 => ", data1);
+  
+        // ✅ CORRETTO: uso "array" invece di "binary"
+        const workbook = XLSX.read(data1, { type: "array", dense: true });
+        console.log("workbook => ", workbook);
+  
         const sheetName = workbook.SheetNames[0];
+        console.log("sheetName => ", sheetName);
+  
         const sheet = workbook.Sheets[sheetName];
-        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        //@ts-ignore
-        setData(parsedData);
-        const totalColumn = Object.keys(parsedData.at(0)!).length;
+        console.log("sheet => ", sheet);
+        console.log("workbook.Sheets => ", workbook.Sheets);
+  
+        // ✅ Parsing ottimizzato: leggo solo un pezzo per volta
+        const options = { defval: "" };
+  
+        // ✅ LIMITA le righe: tipo 1000 per volta
+        const maxRowsPerBatch = 10000; // puoi abbassare a 1000 se vuoi meno carico
+  
+        const parsedData = [];
+        const fullData = XLSX.utils.sheet_to_json(sheet, options);
+  
+        console.log("fullData LENGTH => ", fullData.length);
+  
+        // ✅ carichiamo i dati a pezzettini per non far crashare il browser
+        for (let i = 0; i < fullData.length; i += maxRowsPerBatch) {
+          const chunk = fullData.slice(i, i + maxRowsPerBatch);
+          console.log(`Caricamento chunk da ${i} a ${i + chunk.length}`);
+  
+          parsedData.push(...chunk);
+  
+          // Attendi micro-task in modo da liberare l'UI
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
+  
+        console.log("parsedData => ", parsedData);
+  
+        const totalColumn = Object.keys(parsedData.at(0) || {}).length;
         const totalColumnDatore = totalColumn - 14;
         const counterRowDatore = totalColumnDatore / 16;
-
-        const data = parsedData.map((item) => {
+  
+        const data = parsedData.map((item: any) => {
           let arrDatore = [];
-
+  
           for (let index = 0; index < counterRowDatore; index++) {
             if (index === 0) {
-              // @ts-ignore
               if ((item[`CFDatoreDiLavoro`] as string) === "") {
                 index = 3;
               } else {
                 arrDatore.push({
-                  // @ts-ignore
                   cfPersona: item[`CF`] as string,
-                  // @ts-ignore
                   cfdatore: item[`CFDatoreDiLavoro`] as string,
-                  // @ts-ignore
                   tipo: item[`Tipo`] as string,
-                  // @ts-ignore
                   reddito: item[`Reddito`] as string,
-                  // @ts-ignore
                   mese: item[`MESE`] as string,
-                  // @ts-ignore
                   partTime: item[`PART FULL TIME`] as string,
-                  // @ts-ignore
                   inizio: item[`Inizio`] as string,
-                  // @ts-ignore
                   fine: item[`Fine`] as string,
-                  // @ts-ignore
                   piva: item[`P.IVA_1`] as string,
-                  // @ts-ignore
                   ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
-                  // @ts-ignore
                   nome: item[`Nome_1`] as string,
-                  // @ts-ignore
                   via: item[`Via_1`] as string,
-                  // @ts-ignore
                   cap: item[`Cap_1`] as string,
-                  // @ts-ignore
                   comune: item[`Comune_1`] as string,
-                  // @ts-ignore
                   provincia: item[`Provincia_1`] as string,
                 });
               }
             } else {
-              // @ts-ignore
               if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
                 index = 3;
               } else {
                 arrDatore.push({
-                  // @ts-ignore
                   cfPersona: item[`CF`] as string,
-                  // @ts-ignore
                   cfdatore: item[`CFDatoreDiLavoro_${index}`] as string,
-                  // @ts-ignore
                   tipo: item[`Tipo_${index}`] as string,
-                  // @ts-ignore
                   reddito: item[`Reddito_${index}`] as string,
-                  // @ts-ignore
                   mese: item[`MESE_${index}`] as string,
-                  // @ts-ignore
                   partTime: item[`PART FULL TIME_${index}`] as string,
-                  // @ts-ignore
                   inizio: item[`Inizio_${index}`] as string,
-                  // @ts-ignore
                   fine: item[`Fine_${index}`] as string,
-                  // @ts-ignore
                   piva: item[`P.IVA_${index + 1}`] as string,
-                  // @ts-ignore
-                  ragioneSociale: item[
-                    `CognomeRagioneSociale_${index + 1}`
-                  ] as string,
-                  // @ts-ignore
+                  ragioneSociale: item[`CognomeRagioneSociale_${index + 1}`] as string,
                   nome: item[`Nome_${index + 1}`] as string,
-                  // @ts-ignore
                   via: item[`Via_${index + 1}`] as string,
-                  // @ts-ignore
                   cap: item[`Cap_${index + 1}`] as string,
-                  // @ts-ignore
                   comune: item[`Comune_${index + 1}`] as string,
-                  // @ts-ignore
                   provincia: item[`Provincia_${index + 1}`] as string,
                 });
               }
             }
           }
           return {
-            // @ts-ignore
             CF: item[`CF`] as string,
-            // @ts-ignore
             PIVA: item[`P.IVA`] as string,
-            // @ts-ignore
             nome: item[`Nome`] as string,
-            // @ts-ignore
             cognome: item[`CognomeRagioneSociale`] as string,
-            // @ts-ignore
             sesso: item[`Sesso`] as string,
-            // @ts-ignore
             comune_nascita: item[`ComuneNasc'a`] as string,
-            // @ts-ignore
             provincia_nascita: item[`ProvNasc'a`] as string,
-            // @ts-ignore
             data_nascita: item[`DataNasc'a`] as string,
-            // @ts-ignore
             data_morte: item[`DataMorte`] as string,
-            // @ts-ignore
             via: item[`Via`] as string,
-            // @ts-ignore
             cap: item[`Cap`] as string,
-            // @ts-ignore
             comune: item[`Comune`] as string,
-            // @ts-ignore
             provincia: item[`Provincia`] as string,
             datore: arrDatore,
           };
         });
-
+  
         console.log("Inizio elaborazione di ", data.length, " persone");
-
+  
         console.log(
           "Numero di datori ",
           data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
         );
-    
-        // Suddividi i record in blocchi da 25
+  
         const batchSize = 25;
         let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
-    
-        // Suddividi i dati in batch
+  
         for (let i = 0; i < data.length; i += batchSize) {
           const batch = data.slice(i, i + batchSize);
+          console.log("i => ", i);
           const res = await addDataToDatore(batch);
-          
+  
           if (res?.status === "ok") {
             total.inseriti += res.inseriti;
             total.aggiornati += res.aggiornati;
@@ -284,19 +267,204 @@ export default function Page() {
               description: "Errore durante l'importazione.",
             });
           }
-
+  
           toast({
             title: "✅ Importazione completata",
             description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
           });
         }
-        
-
       };
     }
-
+  
     setIspending(false);
   };
+  
+  // const handleFileAnagraficaLavoro = (e) => {
+  //   setIspending(true);
+
+  //   const file = e.target.files[0];
+
+  //   if (!file) return;
+
+  //   if (isExcelFile(file) && file.size !== 0) {
+  //     const reader = new FileReader();
+  //     reader.readAsArrayBuffer(file);
+  //     reader.onloadend = async (e) => {
+  //       const data1 = e?.target?.result;
+  //       console.log("data1 => ", data1);
+  //       const workbook = XLSX.read(data1, { type: "binary" });
+  //       console.log("workbook => ", workbook);
+  //       const sheetName = workbook.SheetNames[0];
+  //       console.log("sheetName => ", sheetName);
+  //       const sheet = workbook.Sheets[sheetName];
+  //       console.log("sheet => ", sheet)
+  //       console.log("sheet => ", workbook.Sheets)
+  //       const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+  //       //@ts-ignore
+  //       // setData(parsedData);
+  //       console.log("parsedData => ", parsedData)
+  //       const totalColumn = Object.keys(parsedData.at(0)!).length;
+  //       const totalColumnDatore = totalColumn - 14;
+  //       const counterRowDatore = totalColumnDatore / 16;
+
+  //       const data = parsedData.map((item) => {
+  //         let arrDatore = [];
+
+  //         for (let index = 0; index < counterRowDatore; index++) {
+  //           if (index === 0) {
+  //             // @ts-ignore
+  //             if ((item[`CFDatoreDiLavoro`] as string) === "") {
+  //               index = 3;
+  //             } else {
+  //               arrDatore.push({
+  //                 // @ts-ignore
+  //                 cfPersona: item[`CF`] as string,
+  //                 // @ts-ignore
+  //                 cfdatore: item[`CFDatoreDiLavoro`] as string,
+  //                 // @ts-ignore
+  //                 tipo: item[`Tipo`] as string,
+  //                 // @ts-ignore
+  //                 reddito: item[`Reddito`] as string,
+  //                 // @ts-ignore
+  //                 mese: item[`MESE`] as string,
+  //                 // @ts-ignore
+  //                 partTime: item[`PART FULL TIME`] as string,
+  //                 // @ts-ignore
+  //                 inizio: item[`Inizio`] as string,
+  //                 // @ts-ignore
+  //                 fine: item[`Fine`] as string,
+  //                 // @ts-ignore
+  //                 piva: item[`P.IVA_1`] as string,
+  //                 // @ts-ignore
+  //                 ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
+  //                 // @ts-ignore
+  //                 nome: item[`Nome_1`] as string,
+  //                 // @ts-ignore
+  //                 via: item[`Via_1`] as string,
+  //                 // @ts-ignore
+  //                 cap: item[`Cap_1`] as string,
+  //                 // @ts-ignore
+  //                 comune: item[`Comune_1`] as string,
+  //                 // @ts-ignore
+  //                 provincia: item[`Provincia_1`] as string,
+  //               });
+  //             }
+  //           } else {
+  //             // @ts-ignore
+  //             if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
+  //               index = 3;
+  //             } else {
+  //               arrDatore.push({
+  //                 // @ts-ignore
+  //                 cfPersona: item[`CF`] as string,
+  //                 // @ts-ignore
+  //                 cfdatore: item[`CFDatoreDiLavoro_${index}`] as string,
+  //                 // @ts-ignore
+  //                 tipo: item[`Tipo_${index}`] as string,
+  //                 // @ts-ignore
+  //                 reddito: item[`Reddito_${index}`] as string,
+  //                 // @ts-ignore
+  //                 mese: item[`MESE_${index}`] as string,
+  //                 // @ts-ignore
+  //                 partTime: item[`PART FULL TIME_${index}`] as string,
+  //                 // @ts-ignore
+  //                 inizio: item[`Inizio_${index}`] as string,
+  //                 // @ts-ignore
+  //                 fine: item[`Fine_${index}`] as string,
+  //                 // @ts-ignore
+  //                 piva: item[`P.IVA_${index + 1}`] as string,
+  //                 // @ts-ignore
+  //                 ragioneSociale: item[
+  //                   `CognomeRagioneSociale_${index + 1}`
+  //                 ] as string,
+  //                 // @ts-ignore
+  //                 nome: item[`Nome_${index + 1}`] as string,
+  //                 // @ts-ignore
+  //                 via: item[`Via_${index + 1}`] as string,
+  //                 // @ts-ignore
+  //                 cap: item[`Cap_${index + 1}`] as string,
+  //                 // @ts-ignore
+  //                 comune: item[`Comune_${index + 1}`] as string,
+  //                 // @ts-ignore
+  //                 provincia: item[`Provincia_${index + 1}`] as string,
+  //               });
+  //             }
+  //           }
+  //         }
+  //         return {
+  //           // @ts-ignore
+  //           CF: item[`CF`] as string,
+  //           // @ts-ignore
+  //           PIVA: item[`P.IVA`] as string,
+  //           // @ts-ignore
+  //           nome: item[`Nome`] as string,
+  //           // @ts-ignore
+  //           cognome: item[`CognomeRagioneSociale`] as string,
+  //           // @ts-ignore
+  //           sesso: item[`Sesso`] as string,
+  //           // @ts-ignore
+  //           comune_nascita: item[`ComuneNasc'a`] as string,
+  //           // @ts-ignore
+  //           provincia_nascita: item[`ProvNasc'a`] as string,
+  //           // @ts-ignore
+  //           data_nascita: item[`DataNasc'a`] as string,
+  //           // @ts-ignore
+  //           data_morte: item[`DataMorte`] as string,
+  //           // @ts-ignore
+  //           via: item[`Via`] as string,
+  //           // @ts-ignore
+  //           cap: item[`Cap`] as string,
+  //           // @ts-ignore
+  //           comune: item[`Comune`] as string,
+  //           // @ts-ignore
+  //           provincia: item[`Provincia`] as string,
+  //           datore: arrDatore,
+  //         };
+  //       });
+
+  //       console.log("Inizio elaborazione di ", data.length, " persone");
+
+  //       console.log(
+  //         "Numero di datori ",
+  //         data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
+  //       );
+
+
+    
+  //       // Suddividi i record in blocchi da 25
+  //       const batchSize = 25;
+  //       let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
+    
+  //       // Suddividi i dati in batch
+  //       for (let i = 0; i < data.length; i += batchSize) {
+  //         const batch = data.slice(i, i + batchSize);
+  //         console.log("i => ", i)
+  //         const res = await addDataToDatore(batch);
+          
+  //         if (res?.status === "ok") {
+  //           total.inseriti += res.inseriti;
+  //           total.aggiornati += res.aggiornati;
+  //           total.duplicati += res.duplicati;
+  //         } else {
+  //           toast({
+  //             variant: "destructive",
+  //             title: "Errore!",
+  //             description: "Errore durante l'importazione.",
+  //           });
+  //         }
+
+  //         toast({
+  //           title: "✅ Importazione completata",
+  //           description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
+  //         });
+  //       }
+        
+
+  //     };
+  //   }
+
+  //   setIspending(false);
+  // };
 
   // Funzione per trasformare i dati
   const transformArray = (array: { CF: string; [key: string]: string }[]) => {
