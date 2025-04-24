@@ -764,7 +764,7 @@ export default function Page() {
         if (res?.status === "ok") {
           total.inseriti += res.inseriti ?? 0;
           total.aggiornati += res.aggiornati ?? 0;
-          total.eliminati += res.eliminati ?? 0;
+          total.eliminati += res.duplicati ?? 0;
         } else {
           toast({
             variant: "destructive",

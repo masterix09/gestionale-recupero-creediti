@@ -363,15 +363,21 @@ export async function importaTelefoni(personeInput: TelefonoInput[]) {
       }
     );
 
-    const json = await response.json();
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Errore durante fetch:", response.status, errorText);
+      throw new Error("Errore durante l'aggiunta del job Telefoni");
+    }
 
-    if (!response.ok) throw new Error("Errore nella chiamata al worker");
+    const result = await response.json();
+
+    revalidatePath("/category/telefono");
 
     return {
       status: "ok",
-      inseriti: json.inseriti,
-      aggiornati: json.aggiornati,
-      eliminati: json.eliminati,
+      inseriti: result.inseriti,
+      aggiornati: result.aggiornati,
+      duplicati: result.duplicati,
     };
   } catch (error) {
     console.error("Errore durante l'importazione:", error);
