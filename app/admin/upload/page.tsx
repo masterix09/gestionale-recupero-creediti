@@ -712,11 +712,17 @@ export default function Page() {
     if (!file) return;
 
     const MAX_SIZE_MB = 5;
-    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const isExcel = fileExtension === "xlsx" || fileExtension === "xls";
+    const isCsv = fileExtension === "csv";
+
+    // Se è excel e pesa troppo
+    if (isExcel && file.size / (1024 * 1024) > MAX_XLSX_SIZE_MB) {
       toast({
         variant: "destructive",
-        title: "File troppo grande",
-        description: `Converti il file in formato CSV per continuare (max ${MAX_SIZE_MB}MB)`,
+        title: "📄 File troppo grande!",
+        description:
+          "Converti il file in formato .CSV per caricarlo correttamente.",
       });
       setIspending(false);
       return;
