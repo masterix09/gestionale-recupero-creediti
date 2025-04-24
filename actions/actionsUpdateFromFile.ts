@@ -230,68 +230,68 @@ export async function importaPersone(personeInput: PersonaInput[]) {
     //   const batch = personeInput.slice(i, i + batchSize);
 
     // --- 1. Estrai i CF unici del batch
-    const cfUnici = Array.from(new Set(personeInput.map((p) => p.CF)));
+    // const cfUnici = Array.from(new Set(personeInput.map((p) => p.CF)));
 
     // --- 2. Recupera le persone esistenti dal DB
-    const personeEsistenti = await prisma.persona.findMany({
-      where: { CF: { in: cfUnici } },
-    });
+    // const personeEsistenti = await prisma.persona.findMany({
+    //   where: { CF: { in: cfUnici } },
+    // });
 
     // --- 3. Prepara dati per creazione/aggiornamento
-    const personeDaCreare: any[] = [];
-    const personeDaAggiornare: any[] = [];
+    // const personeDaCreare: any[] = [];
+    // const personeDaAggiornare: any[] = [];
 
-    for (const personaInput of personeInput) {
-      const personaEsistente = personeEsistenti.find(
-        (p) => p.CF === personaInput.CF
-      );
+    // for (const personaInput of personeInput) {
+    //   const personaEsistente = personeEsistenti.find(
+    //     (p) => p.CF === personaInput.CF
+    //   );
 
-      const nuovaVia = personaInput.Via.toString();
-      const nuovaCap = personaInput.Cap.toString();
-      const nuovoComune = personaInput.Comune.toString();
-      const nuovaProvincia = personaInput.Provincia.toString();
+    //   const nuovaVia = personaInput.Via.toString();
+    //   const nuovaCap = personaInput.Cap.toString();
+    //   const nuovoComune = personaInput.Comune.toString();
+    //   const nuovaProvincia = personaInput.Provincia.toString();
 
-      const personaData = {
-        id: personaInput.CF, // Aggiunto campo id uguale al CF
-        CF: personaInput.CF,
-        PIVA: personaInput.PIVA.toString(),
-        cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
-        nome: personaInput.Nome.toString(), // nome della società
-        sesso: personaInput.Sesso.toString(),
-        comune_nascita: personaInput.ComuneNascita.toString(),
-        provincia_nascita: personaInput.ProvinciaNascita.toString(),
-        data_nascita: personaInput.DataNascita.toString(),
-        data_morte: personaInput.DataMorte.toString(),
-        via: aggiungiSeNonPresente(
-          personaEsistente?.via,
-          personaInput.Via.toString()
-        ),
-        cap: aggiungiSeNonPresente(
-          personaEsistente?.cap,
-          personaInput.Cap.toString()
-        ),
-        comune: aggiungiSeNonPresente(
-          personaEsistente?.comune,
-          personaInput.Comune.toString()
-        ),
-        provincia: aggiungiSeNonPresente(
-          personaEsistente?.provincia,
-          personaInput.Provincia.toString()
-        ),
-      };
+    //   const personaData = {
+    //     id: personaInput.CF, // Aggiunto campo id uguale al CF
+    //     CF: personaInput.CF,
+    //     PIVA: personaInput.PIVA.toString(),
+    //     cognome: personaInput.CognomeRagioneSociale.toString(), // nome della società
+    //     nome: personaInput.Nome.toString(), // nome della società
+    //     sesso: personaInput.Sesso.toString(),
+    //     comune_nascita: personaInput.ComuneNascita.toString(),
+    //     provincia_nascita: personaInput.ProvinciaNascita.toString(),
+    //     data_nascita: personaInput.DataNascita.toString(),
+    //     data_morte: personaInput.DataMorte.toString(),
+    //     via: aggiungiSeNonPresente(
+    //       personaEsistente?.via,
+    //       personaInput.Via.toString()
+    //     ),
+    //     cap: aggiungiSeNonPresente(
+    //       personaEsistente?.cap,
+    //       personaInput.Cap.toString()
+    //     ),
+    //     comune: aggiungiSeNonPresente(
+    //       personaEsistente?.comune,
+    //       personaInput.Comune.toString()
+    //     ),
+    //     provincia: aggiungiSeNonPresente(
+    //       personaEsistente?.provincia,
+    //       personaInput.Provincia.toString()
+    //     ),
+    //   };
 
-      if (personaEsistente) {
-        personeDaAggiornare.push({
-          where: { CF: personaInput.CF },
-          data: personaData,
-        });
-      } else {
-        personeDaCreare.push(personaData);
-      }
-    }
+    //   if (personaEsistente) {
+    //     personeDaAggiornare.push({
+    //       where: { CF: personaInput.CF },
+    //       data: personaData,
+    //     });
+    //   } else {
+    //     personeDaCreare.push(personaData);
+    //   }
+    // }
 
     // --- 4. Effettua la chiamata esterna fuori dalla transazione
-    console.log("faccio la chiamata");
+    // console.log("faccio la chiamata");
 
     // const controller = new AbortController();
     // const timeout = setTimeout(() => controller.abort(), 10000); // 10s timeout
@@ -322,7 +322,7 @@ export async function importaPersone(personeInput: PersonaInput[]) {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personeDaCreare, personeDaAggiornare }),
+        body: JSON.stringify({ personeInput }),
       }
     );
 
