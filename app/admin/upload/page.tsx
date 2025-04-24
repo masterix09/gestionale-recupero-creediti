@@ -706,61 +706,74 @@ export default function Page() {
   };
 
   // @ts-ignore
-  const handleFileTelefono = (e) => {
+  const handleFileTelefono = async (e) => {
     setIspending(true);
-    // console.log(e);
-    const file = e.target.files[0];
-    // console.log(file);
-
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    if (isExcelFile(file) && file.size !== 0) {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onload = async (e) => {
-        // @ts-ignore
-        const data1 = e.target.result;
-        const workbook = XLSX.read(data1, { type: "binary" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        // console.log(parsedData);
-        //@ts-ignore
-        setData(parsedData);
-        const data = parsedData.map((item) => {
-          return {
-            // @ts-ignore
-            CF: item[`CF`] as string,
-            // @ts-ignore
-            Tel1: item[`Tel 1`] as string,
-            // @ts-ignore
-            Tel2: item[`Tel 2`] as string,
-            // @ts-ignore
-            Tel3: item[`Tel 3`] as string,
-            // @ts-ignore
-            Tel4: item[`Tel 4`] as string,
-            // @ts-ignore
-            Tel5: item[`Tel 5`] as string,
-            // @ts-ignore
-            Tel6: item[`Tel 6`] as string,
-          };
-        });
-        const res = await importaTelefoni(data);
-        if (res === "OK") {
-          toast({
-            title: "Successo!",
-            description: "Operazione avvenuta con successo",
-          });
+    const MAX_SIZE_MB = 5;
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "File troppo grande",
+        description: `Converti il file in formato CSV per continuare (max ${MAX_SIZE_MB}MB)`,
+      });
+      setIspending(false);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onloadend = async (e) => {
+      const buffer = e.target?.result;
+      const workbook = XLSX.read(buffer, { type: "array" }); // meglio "array" che "binary"
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: false,
+      });
+
+      const data = parsedData.map((item: any) => ({
+        CF: item[`CF`] ?? "",
+        Tel1: item[`Tel 1`] ?? "",
+        Tel2: item[`Tel 2`] ?? "",
+        Tel3: item[`Tel 3`] ?? "",
+        Tel4: item[`Tel 4`] ?? "",
+        Tel5: item[`Tel 5`] ?? "",
+        Tel6: item[`Tel 6`] ?? "",
+      }));
+
+      const batchSize = 100;
+      const total = {
+        inseriti: 0,
+        aggiornati: 0,
+        eliminati: 0,
+      };
+
+      for (let i = 0; i < data.length; i += batchSize) {
+        const chunk = data.slice(i, i + batchSize);
+        const res = await importaTelefoni(chunk);
+
+        if (res?.status === "ok") {
+          total.inseriti += res.inseriti ?? 0;
+          total.aggiornati += res.aggiornati ?? 0;
+          total.eliminati += res.eliminati ?? 0;
         } else {
           toast({
             variant: "destructive",
-            title: "Ops ! Errore!",
-            description: "Errore operazione. Riprova!",
+            title: "Errore batch",
+            description: `Errore durante il batch ${i / batchSize + 1}`,
           });
         }
-      };
-    }
-    setIspending(false);
+      }
+
+      toast({
+        title: "✅ Importazione completata",
+        description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Eliminati: ${total.eliminati}`,
+      });
+      setIspending(false);
+    };
   };
 
   // @ts-ignore

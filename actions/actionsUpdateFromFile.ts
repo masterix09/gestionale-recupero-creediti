@@ -354,119 +354,28 @@ export async function importaPersone(personeInput: PersonaInput[]) {
 
 export async function importaTelefoni(personeInput: TelefonoInput[]) {
   try {
-    const batchSize = 100; // Per evitare timeout
-    const chunks = chunkArray(personeInput, batchSize);
+    const response = await fetch(
+      "https://worker-gestionale-recupero-crediti.onrender.com/telefono",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ persone: personeInput }),
+      }
+    );
 
-    for (const batch of chunks) {
-      await prisma.$transaction(async (prisma) => {
-        // 1️⃣ Ottieni tutti i CF unici nel batch
-        const cfUnici = Array.from(new Set(batch.map((p) => p.CF)));
+    const json = await response.json();
 
-        // 2️⃣ Trova solo le persone esistenti nel database
-        const personeEsistenti = await prisma.persona.findMany({
-          where: { CF: { in: cfUnici } },
-          select: { id: true, CF: true },
-        });
+    if (!response.ok) throw new Error("Errore nella chiamata al worker");
 
-        // Crea una mappa di CF -> ID Persona
-        const personaIdMap = new Map(personeEsistenti.map((p) => [p.CF, p.id]));
-
-        // 3️⃣ Trova tutti i telefoni esistenti per queste persone
-        const personaIds = Array.from(personaIdMap.values());
-        const telefoniEsistenti = await prisma.telefono.findMany({
-          where: { personaID: { in: personaIds } },
-          select: { id: true, value: true, personaID: true },
-        });
-
-        // Crea una mappa di personaID -> [Telefoni esistenti]
-        const telefoniEsistentiMap = new Map<
-          string,
-          { id: string; value: string }[]
-        >();
-        telefoniEsistenti.forEach((t) => {
-          if (!telefoniEsistentiMap.has(t.personaID!)) {
-            telefoniEsistentiMap.set(t.personaID!, []);
-          }
-          telefoniEsistentiMap.get(t.personaID!)!.push(t);
-        });
-
-        // 4️⃣ Prepara i dati per l'update e la creazione dei telefoni
-        const telefoniDaCreare: Prisma.TelefonoCreateManyInput[] = [];
-        const telefoniDaAggiornare: { id: string; value: string }[] = [];
-        const telefoniDaEliminare: string[] = [];
-
-        for (const persona of batch) {
-          const personaID = personaIdMap.get(persona.CF);
-          if (!personaID) {
-            // Se la persona non esiste, ignora i suoi telefoni
-            console.warn(
-              `Persona con CF ${persona.CF} non trovata, ignorando i telefoni`
-            );
-            continue;
-          }
-
-          // Telefoni presenti nel file
-          const nuoviNumeri = [
-            persona.Tel1,
-            persona.Tel2,
-            persona.Tel3,
-            persona.Tel4,
-            persona.Tel5,
-            persona.Tel6,
-          ].filter(Boolean);
-          const telefoniAttuali = telefoniEsistentiMap.get(personaID) || [];
-
-          // 5️⃣ Decide se aggiornare, creare o eliminare telefoni
-          for (let i = 0; i < nuoviNumeri.length; i++) {
-            const numero = nuoviNumeri[i]!;
-            if (telefoniAttuali[i]) {
-              if (telefoniAttuali[i].value !== numero) {
-                telefoniDaAggiornare.push({
-                  id: telefoniAttuali[i].id,
-                  value: numero,
-                });
-              }
-            } else {
-              telefoniDaCreare.push({
-                id: `${personaID}-${numero}`,
-                value: numero,
-                personaID: personaID,
-              });
-            }
-          }
-
-          // Se ci sono più telefoni nel DB di quelli nuovi, rimuoviamo quelli extra
-          if (telefoniAttuali.length > nuoviNumeri.length) {
-            telefoniDaEliminare.push(
-              ...telefoniAttuali.slice(nuoviNumeri.length).map((t) => t.id)
-            );
-          }
-        }
-
-        const response = await fetch(
-          "https://worker-gestionale-recupero-crediti.onrender.com/telefono",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              telefoniDaCreare,
-              telefoniDaAggiornare,
-              telefoniDaEliminare,
-            }),
-          }
-        );
-
-        if (!response.ok)
-          throw new Error("Errore durante l'aggiunta del job Telefono");
-        return "OK";
-      });
-    }
-
-    revalidatePath("/category/telefono");
-    return "OK";
+    return {
+      status: "ok",
+      inseriti: json.inseriti,
+      aggiornati: json.aggiornati,
+      eliminati: json.eliminati,
+    };
   } catch (error) {
     console.error("Errore durante l'importazione:", error);
-    return "errore";
+    return { status: "errore" };
   }
 }
 
