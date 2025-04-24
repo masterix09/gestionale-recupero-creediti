@@ -66,23 +66,23 @@ export type PersonaInput = {
 
 export async function addDataToDatore(data: TData[]) {
   try {
-    console.log("Inizio elaborazione di ", data.length, " persone");
+    // console.log("Inizio elaborazione di ", data.length, " persone");
 
-    console.log(
-      "Numero di datori ",
-      data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
-    );
+    // console.log(
+    //   "Numero di datori ",
+    //   data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
+    // );
 
-    // Suddividi i record in blocchi da 100
-    const batchSize = 25;
-    const batches = [];
+    // // Suddividi i record in blocchi da 100
+    // const batchSize = 25;
+    // const batches = [];
 
-    // Suddividi i dati in batch
-    for (let i = 0; i < data.length; i += batchSize) {
-      batches.push(data.slice(i, i + batchSize));
-    }
+    // // Suddividi i dati in batch
+    // for (let i = 0; i < data.length; i += batchSize) {
+    //   batches.push(data.slice(i, i + batchSize));
+    // }
 
-    console.log("batches => ", batches.length);
+    // console.log("batches => ", batches.length);
 
     const dataOnlyCF: string[] = data.map((item) => item.CF);
 
@@ -95,40 +95,59 @@ export async function addDataToDatore(data: TData[]) {
     });
 
     // Esegui ogni batch come una transazione separata
-    for (const batch of batches) {
-      const recordsToCreate = [];
-      const recordsToUpdate = [];
-      for (const item of batch) {
-        for (const element of item.datore) {
-          const {
-            cap,
+    // for (const batch of batches) {
+    const recordsToCreate = [];
+    const recordsToUpdate = [];
+    for (const item of data) {
+      for (const element of item.datore) {
+        const {
+          cap,
+          comune,
+          fine,
+          inizio,
+          mese,
+          nome,
+          partTime,
+          piva,
+          provincia,
+          ragioneSociale,
+          reddito,
+          tipo,
+          via,
+          cfPersona,
+          cfdatore,
+        } = element;
+
+        // Verifica se il record esiste già
+        const existingRecord = existingDatore.find(
+          (el) => el.personaID === cfPersona && el.CF === cfdatore
+        );
+
+        if (!existingRecord) {
+          // Se il record non esiste, aggiungilo all'array
+          recordsToCreate.push({
+            id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
+            cap: cap?.toString() ?? "",
+            CF: cfdatore?.toString() ?? "",
             comune,
             fine,
             inizio,
-            mese,
+            mese: mese?.toString() ?? "",
             nome,
-            partTime,
-            piva,
+            PIVA: piva?.toString(),
             provincia,
-            ragioneSociale,
-            reddito,
+            ragione_sociale: ragioneSociale?.toString(),
+            reddito: reddito?.toString() ?? "",
             tipo,
+            tipologia_contratto: partTime?.toString(),
             via,
-            cfPersona,
-            cfdatore,
-          } = element;
-
-          // Verifica se il record esiste già
-          const existingRecord = existingDatore.find(
-            (el) => el.personaID === cfPersona && el.CF === cfdatore
-          );
-
-          if (!existingRecord) {
-            // Se il record non esiste, aggiungilo all'array
-            recordsToCreate.push({
-              id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
+            personaID: cfPersona,
+          });
+        } else {
+          recordsToUpdate.push({
+            where: { id: existingRecord.id },
+            data: {
               cap: cap?.toString() ?? "",
-              CF: cfdatore?.toString() ?? "",
               comune,
               fine,
               inizio,
@@ -142,65 +161,55 @@ export async function addDataToDatore(data: TData[]) {
               tipologia_contratto: partTime?.toString(),
               via,
               personaID: cfPersona,
-            });
-          } else {
-            recordsToUpdate.push({
-              where: { id: existingRecord.id },
-              data: {
-                cap: cap?.toString() ?? "",
-                comune,
-                fine,
-                inizio,
-                mese: mese?.toString() ?? "",
-                nome,
-                PIVA: piva?.toString(),
-                provincia,
-                ragione_sociale: ragioneSociale?.toString(),
-                reddito: reddito?.toString() ?? "",
-                tipo,
-                tipologia_contratto: partTime?.toString(),
-                via,
-                personaID: cfPersona,
-              },
-            });
-          }
+            },
+          });
         }
       }
-
-      console.log("recordsToCreate => ", recordsToCreate);
-      console.log(
-        "recordsToUpdate => ",
-        recordsToUpdate.filter(
-          (item) => item.data.personaID === "MLTTZN69T50H501G"
-        )
-      );
-
-      const response = await fetch(
-        "https://worker-gestionale-recupero-crediti.onrender.com/datore",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recordsToCreate,
-            recordsToUpdate,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        console.log(response);
-        throw new Error("Errore durante l'aggiunta del Datore Create");
-      }
-      // return "OK";
     }
 
-    revalidatePath(`/category/lavoro`);
+    // console.log("recordsToCreate => ", recordsToCreate);
+    // console.log(
+    //   "recordsToUpdate => ",
+    //   recordsToUpdate.filter(
+    //     (item) => item.data.personaID === "MLTTZN69T50H501G"
+    //   )
+    // );
 
-    console.log("Elaborazione completata con successo");
-    return "OK";
+    const response = await fetch(
+      "https://worker-gestionale-recupero-crediti.onrender.com/datore",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recordsToCreate,
+          recordsToUpdate,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Errore durante fetch:", response.status, errorText);
+      throw new Error("Errore durante l'aggiunta del job Datore");
+    }
+
+    const result = await response.json();
+
+    revalidatePath("/category/datore");
+
+    return {
+      status: "ok",
+      inseriti: result.inseriti,
+      aggiornati: result.aggiornati,
+      duplicati: result.duplicati,
+    };
   } catch (error) {
-    console.error("Errore generale durante l'elaborazione: ", error);
-    return "error";
+    console.error("Errore durante l'importazione dei datore:", error);
+    // return "errore";
+
+    return {
+      status: "errore",
+    };
   }
 }
 
@@ -563,11 +572,11 @@ export async function updateProcessFileSCP(
   try {
     console.log("Inizio elaborazione SCP per ", data.length, " persone");
 
-    const batchSize = 100;
-    const batches = [];
-    for (let i = 0; i < data.length; i += batchSize) {
-      batches.push(data.slice(i, i + batchSize));
-    }
+    // const batchSize = 100;
+    // const batches = [];
+    // for (let i = 0; i < data.length; i += batchSize) {
+    //   batches.push(data.slice(i, i + batchSize));
+    // }
 
     const dataOnlyCF: string[] = data.map((item) => item.CF);
 
@@ -593,70 +602,80 @@ export async function updateProcessFileSCP(
 
     const personaIDSet = new Set(validPersonaIDsInDB.map((p) => p.id));
 
-    for (const batch of batches) {
-      const recordsToCreate = [];
-      const recordsToUpdate = [];
+    // for (const batch of batches) {
+    const recordsToCreate = [];
+    const recordsToUpdate = [];
 
-      for (const item of batch) {
-        const personaID = item.CF;
+    for (const item of data) {
+      const personaID = item.CF;
 
-        // ❌ Skippa se personaID non è valido
-        if (!personaIDSet.has(personaID)) continue;
+      // ❌ Skippa se personaID non è valido
+      if (!personaIDSet.has(personaID)) continue;
 
-        const existingRecord = existingSCP.find(
-          (el) => el.personaID === personaID
-        );
+      const existingRecord = existingSCP.find(
+        (el) => el.personaID === personaID
+      );
 
-        if (!existingRecord) {
-          recordsToCreate.push({
-            id: item.CF,
+      if (!existingRecord) {
+        recordsToCreate.push({
+          id: item.CF,
+          cessione: item.C.toString(),
+          pignoramento: item.P.toString(),
+          scadenza_cessione: item.SC.toString(),
+          scadenza_pignoramento: item.SP.toString(),
+          personaID: personaID,
+        });
+      } else {
+        recordsToUpdate.push({
+          where: { id: item.CF },
+          data: {
             cessione: item.C.toString(),
             pignoramento: item.P.toString(),
             scadenza_cessione: item.SC.toString(),
             scadenza_pignoramento: item.SP.toString(),
             personaID: personaID,
-          });
-        } else {
-          recordsToUpdate.push({
-            where: { id: item.CF },
-            data: {
-              cessione: item.C.toString(),
-              pignoramento: item.P.toString(),
-              scadenza_cessione: item.SC.toString(),
-              scadenza_pignoramento: item.SP.toString(),
-              personaID: personaID,
-            },
-          });
-        }
-      }
-
-      // 🔥 Fai la fetch solo se hai record validi
-      if (recordsToCreate.length > 0 || recordsToUpdate.length > 0) {
-        const response = await fetch(
-          "https://worker-gestionale-recupero-crediti.onrender.com/scp",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              recordsToCreate,
-              recordsToUpdate,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          console.log("response => ", response);
-          throw new Error("Errore durante l'aggiunta del SCP Create");
-        }
+          },
+        });
       }
     }
 
+    // 🔥 Fai la fetch solo se hai record validi
+
+    const response = await fetch(
+      "https://worker-gestionale-recupero-crediti.onrender.com/scp",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recordsToCreate,
+          recordsToUpdate,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Errore durante fetch:", response.status, errorText);
+      throw new Error("Errore durante l'aggiunta del job SCP");
+    }
+
+    const result = await response.json();
+
     revalidatePath("/category/ultime-scp");
-    console.log("Elaborazione SCP completata con successo");
-    return "OK";
+
+    return {
+      status: "ok",
+      inseriti: result.inseriti,
+      aggiornati: result.aggiornati,
+      duplicati: result.duplicati,
+    };
   } catch (error) {
-    console.error("Errore generale durante l'elaborazione SCP: ", error);
-    return "error";
+    console.error("Errore durante l'importazione delle SCP:", error);
+    // return "errore";
+
+    return {
+      status: "errore",
+    };
   }
 }
 
