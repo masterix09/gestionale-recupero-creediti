@@ -25,6 +25,8 @@ export default function Page() {
   const fileReCC = useRef<HTMLInputElement | null>(null);
   const fileRefABICAB = useRef<HTMLInputElement | null>(null);
 
+  const MAX_XLSX_SIZE_MB = 5; // Limite massimo consigliato per file xlsx
+
   const isExcelFile = (file: { name: any }) => {
     const allowedExtensions = [".xlsx", ".xls"];
     const fileName = file.name;
@@ -36,85 +38,97 @@ export default function Page() {
   };
 
   // @ts-ignore
-  const handleFilePersona = (e) => {
+  const handleFilePersona = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIspending(true);
-
-    const file = e.target.files[0];
-
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    if (isExcelFile(file) && file.size !== 0) {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onload = async (e) => {
-        const data1 = e?.target?.result;
-        const workbook = XLSX.read(data1, { type: "binary" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        console.log("sheet => ", sheet);
-        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        console.log("parsedData => ", parsedData);
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const isExcel = fileExtension === "xlsx" || fileExtension === "xls";
+    const isCsv = fileExtension === "csv";
 
-        // Trasforma i dati per passarli alla server action
-        const data = parsedData.map((item) => {
-          return {
-            //@ts-ignore
-            CF: item[`CF`] as string,
-            //@ts-ignore
-            PIVA: item[`P.IVA`] as string,
-            //@ts-ignore
-            Nome: item[`Nome`] as string,
-            //@ts-ignore
-            CognomeRagioneSociale: item[`CognomeRagioneSociale`] as string,
-            //@ts-ignore
-            Sesso: item[`Sesso`] as string,
-            //@ts-ignore
-            ProvinciaNascita: item[`ProvNasc'a`] as string,
-            //@ts-ignore
-            ComuneNascita: item[`ComuneNasc'a`] as string,
-            //@ts-ignore
-            DataNascita: item[`DataNasc'a`] as string,
-            //@ts-ignore
-            DataMorte: item[`DataMorte`] as string,
-            //@ts-ignore
-            Via: item[`Via`] as string,
-            //@ts-ignore
-            Cap: item[`Cap`] as string,
-            //@ts-ignore
-            Comune: item[`Comune`] as string,
-            //@ts-ignore
-            Provincia: item[`Provincia`] as string,
-          };
-        });
-
-        // INIZIO DIVISIONE IN BATCH
-        const batchSize = 100;
-        let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
-
-        // for (let i = 0; i < data.length; i += batchSize) {
-        //   const batch = data.slice(i, i + batchSize);
-
-        //   const res = await importaPersone(batch);
-
-        //   if (res?.status === "ok") {
-        //     total.inseriti += res.inseriti;
-        //     total.aggiornati += res.aggiornati;
-        //     total.duplicati += res.duplicati;
-        //   } else {
-        //     toast({
-        //       variant: "destructive",
-        //       title: "Errore!",
-        //       description: "Errore durante l'importazione.",
-        //     });
-        //   }
-        // }
-
-        toast({
-          title: "✅ Importazione completata",
-          description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
-        });
-      };
+    // Se è excel e pesa troppo
+    if (isExcel && file.size / (1024 * 1024) > MAX_XLSX_SIZE_MB) {
+      toast({
+        variant: "destructive",
+        title: "📄 File troppo grande!",
+        description:
+          "Converti il file in formato .CSV per caricarlo correttamente.",
+      });
+      setIspending(false);
+      return;
     }
+
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onloadend = async (e) => {
+      const buffer = e.target?.result;
+      const workbook = XLSX.read(buffer, { type: "array" }); // meglio "array" che "binary"
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: false,
+      });
+      // Trasforma i dati per passarli alla server action
+      const data = parsedData.map((item) => {
+        return {
+          //@ts-ignore
+          CF: item[`CF`] as string,
+          //@ts-ignore
+          PIVA: item[`P.IVA`] as string,
+          //@ts-ignore
+          Nome: item[`Nome`] as string,
+          //@ts-ignore
+          CognomeRagioneSociale: item[`CognomeRagioneSociale`] as string,
+          //@ts-ignore
+          Sesso: item[`Sesso`] as string,
+          //@ts-ignore
+          ProvinciaNascita: item[`ProvNasc'a`] as string,
+          //@ts-ignore
+          ComuneNascita: item[`ComuneNasc'a`] as string,
+          //@ts-ignore
+          DataNascita: item[`DataNasc'a`] as string,
+          //@ts-ignore
+          DataMorte: item[`DataMorte`] as string,
+          //@ts-ignore
+          Via: item[`Via`] as string,
+          //@ts-ignore
+          Cap: item[`Cap`] as string,
+          //@ts-ignore
+          Comune: item[`Comune`] as string,
+          //@ts-ignore
+          Provincia: item[`Provincia`] as string,
+        };
+      });
+
+      // INIZIO DIVISIONE IN BATCH
+      const batchSize = 100;
+      let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
+
+      for (let i = 0; i < data.length; i += batchSize) {
+        const batch = data.slice(i, i + batchSize);
+
+        const res = await importaPersone(batch);
+
+        if (res?.status === "ok") {
+          total.inseriti += res.inseriti;
+          total.aggiornati += res.aggiornati;
+          total.duplicati += res.duplicati;
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Errore!",
+            description: "Errore durante l'importazione.",
+          });
+        }
+      }
+
+      toast({
+        title: "✅ Importazione completata",
+        description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
+      });
+    };
 
     setIspending(false);
   };
@@ -298,8 +312,6 @@ export default function Page() {
 
   //   setIspending(false);
   // };
-
-  const MAX_XLSX_SIZE_MB = 5; // Limite massimo consigliato per file xlsx
 
   const handleFileAnagraficaLavoro = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -706,61 +718,79 @@ export default function Page() {
   };
 
   // @ts-ignore
-  const handleFileTelefono = (e) => {
+  const handleFileTelefono = async (e) => {
     setIspending(true);
-    // console.log(e);
-    const file = e.target.files[0];
-    // console.log(file);
-
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    if (isExcelFile(file) && file.size !== 0) {
-      const reader = new FileReader();
-      reader.readAsArrayBuffer(file);
-      reader.onload = async (e) => {
-        // @ts-ignore
-        const data1 = e.target.result;
-        const workbook = XLSX.read(data1, { type: "binary" });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-        // console.log(parsedData);
-        //@ts-ignore
-        setData(parsedData);
-        const data = parsedData.map((item) => {
-          return {
-            // @ts-ignore
-            CF: item[`CF`] as string,
-            // @ts-ignore
-            Tel1: item[`Tel 1`] as string,
-            // @ts-ignore
-            Tel2: item[`Tel 2`] as string,
-            // @ts-ignore
-            Tel3: item[`Tel 3`] as string,
-            // @ts-ignore
-            Tel4: item[`Tel 4`] as string,
-            // @ts-ignore
-            Tel5: item[`Tel 5`] as string,
-            // @ts-ignore
-            Tel6: item[`Tel 6`] as string,
-          };
-        });
-        const res = await importaTelefoni(data);
-        if (res === "OK") {
-          toast({
-            title: "Successo!",
-            description: "Operazione avvenuta con successo",
-          });
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const isExcel = fileExtension === "xlsx" || fileExtension === "xls";
+    const isCsv = fileExtension === "csv";
+
+    // Se è excel e pesa troppo
+    if (isExcel && file.size / (1024 * 1024) > MAX_XLSX_SIZE_MB) {
+      toast({
+        variant: "destructive",
+        title: "📄 File troppo grande!",
+        description:
+          "Converti il file in formato .CSV per caricarlo correttamente.",
+      });
+      setIspending(false);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.readAsArrayBuffer(file);
+    reader.onloadend = async (e) => {
+      const buffer = e.target?.result;
+      const workbook = XLSX.read(buffer, { type: "array" }); // meglio "array" che "binary"
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const parsedData = XLSX.utils.sheet_to_json(sheet, {
+        defval: "",
+        raw: false,
+      });
+
+      const data = parsedData.map((item: any) => ({
+        CF: item[`CF`] ?? "",
+        Tel1: item[`Tel 1`] ?? "",
+        Tel2: item[`Tel 2`] ?? "",
+        Tel3: item[`Tel 3`] ?? "",
+        Tel4: item[`Tel 4`] ?? "",
+        Tel5: item[`Tel 5`] ?? "",
+        Tel6: item[`Tel 6`] ?? "",
+      }));
+
+      const batchSize = 100;
+      const total = {
+        inseriti: 0,
+        aggiornati: 0,
+        eliminati: 0,
+      };
+
+      for (let i = 0; i < data.length; i += batchSize) {
+        const chunk = data.slice(i, i + batchSize);
+        const res = await importaTelefoni(chunk);
+
+        if (res?.status === "ok") {
+          total.inseriti += res.inseriti ?? 0;
+          total.aggiornati += res.aggiornati ?? 0;
+          total.eliminati += res.duplicati ?? 0;
         } else {
           toast({
             variant: "destructive",
-            title: "Ops ! Errore!",
-            description: "Errore operazione. Riprova!",
+            title: "Errore batch",
+            description: `Errore durante il batch ${i / batchSize + 1}`,
           });
         }
-      };
-    }
-    setIspending(false);
+      }
+
+      toast({
+        title: "✅ Importazione completata",
+        description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Eliminati: ${total.eliminati}`,
+      });
+      setIspending(false);
+    };
   };
 
   // @ts-ignore
