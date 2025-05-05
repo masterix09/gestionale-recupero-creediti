@@ -31,6 +31,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           throw new Error("User not found.");
         }
 
+        if (user && user.disable) {
+          user = null;
+          return user;
+        }
+
         // return user object with the their profile data
         console.log("Autorizzazione completata"); // Log
         return user;

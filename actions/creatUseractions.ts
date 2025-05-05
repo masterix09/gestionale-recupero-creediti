@@ -1,31 +1,58 @@
-"use server"
+"use server";
 
 import prisma from "@/lib/db";
-import { v4 } from 'uuid';
+import { v4 } from "uuid";
 
+export async function createUser(data: {
+  email: string;
+  password: string;
+  packageType: string;
+  token: number;
+}) {
+  const { email, packageType, password, token } = data;
 
-export async function createUser(data: {email: string; password: string; packageType: string; token: number}) {
+  try {
+    await prisma.user.create({
+      data: {
+        id: v4(),
+        email,
+        packageType,
+        password,
+        role: "user",
+        token,
+        disable: false,
+      },
+    });
 
-    const {email, packageType, password, token} = data
+    return "OK";
+  } catch (error: any) {
+    return error.toString();
+  }
+}
 
-    try {
+export async function modifyUser(data: {
+  email: string;
+  packageType: string;
+  token: number;
+  id: string;
+  disableUser: boolean;
+}) {
+  const { email, packageType, token, id, disableUser } = data;
 
-        await prisma.user.create({
-            data: {
-                id: v4(),
-                email,
-                packageType,
-                password,
-                role: "user",
-                token,
-            }
-        })
+  try {
+    await prisma.user.update({
+      where: {
+        id,
+      },
+      data: {
+        packageType,
+        token,
+        disable: disableUser,
+      },
+    });
 
-        return "OK"
-        
-    } catch (error: any) {
-        return error.toString()
-    }
-    
-    
+    return "OK";
+  } catch (error: any) {
+    return error.toString();
+  }
 }
