@@ -176,3 +176,29 @@ export const getTokenById = async (id: string) => {
     },
   });
 };
+
+export const getListUser = async () => {
+  return await prisma.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      packageType: true,
+      token: true,
+    },
+  });
+};
+
+export const getUserDetail = async (id: string) => {
+  return await prisma.user.findFirst({
+    where: {
+      id,
+    },
+    select: {
+      email: true,
+      packageType: true,
+      role: true,
+      token: true,
+      disable: true,
+    },
+  });
+};

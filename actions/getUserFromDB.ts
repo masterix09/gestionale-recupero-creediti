@@ -15,6 +15,7 @@ export default async function checkUser(email: string, password: string) {
       packageType: false,
       password: false,
       role: true,
+      disable: true,
     },
   });
 }

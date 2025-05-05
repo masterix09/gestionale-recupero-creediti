@@ -36,6 +36,13 @@ const Sidebar = () => {
         title="Caricamento dati"
         href="/admin/upload"
       />
+      <SidebarItem
+        icon={
+          <FiUpload className="w-6 h-6 text-red-800 group-hover:text-slate-300 transition-all" />
+        }
+        title="Modifica Utente"
+        href="/admin/updateUser"
+      />
     </div>
   );
 };
