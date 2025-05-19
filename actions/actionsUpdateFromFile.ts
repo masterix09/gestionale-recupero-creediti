@@ -176,7 +176,7 @@ export async function addDataToDatore(data: TData[]) {
     // );
 
     const response = await fetch(
-      "https://worker-gestionale-recupero-crediti.onrender.com/datore",
+      "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/datore",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -318,7 +318,7 @@ export async function importaPersone(personeInput: PersonaInput[]) {
     // return "OK";
 
     const response = await fetch(
-      "https://worker-gestionale-recupero-crediti.onrender.com/anagrafica",
+      "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/anagrafica",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -355,7 +355,7 @@ export async function importaPersone(personeInput: PersonaInput[]) {
 export async function importaTelefoni(personeInput: TelefonoInput[]) {
   try {
     const response = await fetch(
-      "https://worker-gestionale-recupero-crediti.onrender.com/telefono",
+      "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/telefono",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -557,7 +557,7 @@ export async function updateProcessFileSCP(
     // 🔥 Fai la fetch solo se hai record validi
 
     const response = await fetch(
-      "https://worker-gestionale-recupero-crediti.onrender.com/scp",
+      "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/scp",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -736,7 +736,7 @@ export async function updateProcessFileABICAB(
       console.log("Record scartati per personaID non trovati:", scartati);
 
       const response = await fetch(
-        "https://worker-gestionale-recupero-crediti.onrender.com/AbiCab",
+        "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/AbiCab",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -817,7 +817,7 @@ export async function uploadCCFile(
       // console.log("recordsToCreate => ", recordsToCreate);
       if (recordsToCreate.length > 0) {
         const response = await fetch(
-          "https://worker-gestionale-recupero-crediti.onrender.com/contocorrente",
+          "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/contocorrente",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
