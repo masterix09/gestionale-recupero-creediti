@@ -483,26 +483,29 @@ export default function Page() {
 
         console.log("Inizio elaborazione di", data.length, "persone");
 
+        console.log("data => ", data.at(0));
+        console.log("data => ", data.at(1));
+
         const batchSize = 25;
         let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
 
-        for (let i = 0; i < data.length; i += batchSize) {
-          const batch = data.slice(i, i + batchSize);
-          console.log("i => ", i);
-          const res = await addDataToDatore(batch);
+        // for (let i = 0; i < data.length; i += batchSize) {
+        //   const batch = data.slice(i, i + batchSize);
+        //   console.log("i => ", i);
+        //   const res = await addDataToDatore(batch);
 
-          if (res?.status === "ok") {
-            total.inseriti += res.inseriti;
-            total.aggiornati += res.aggiornati;
-            total.duplicati += res.duplicati;
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Errore!",
-              description: "Errore durante l'importazione.",
-            });
-          }
-        }
+        //   if (res?.status === "ok") {
+        //     total.inseriti += res.inseriti;
+        //     total.aggiornati += res.aggiornati;
+        //     total.duplicati += res.duplicati;
+        //   } else {
+        //     toast({
+        //       variant: "destructive",
+        //       title: "Errore!",
+        //       description: "Errore durante l'importazione.",
+        //     });
+        //   }
+        // }
 
         toast({
           title: "✅ Importazione completata",

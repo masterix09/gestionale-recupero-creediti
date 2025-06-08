@@ -54,12 +54,66 @@ import { unstable_noStore } from "next/cache";
 //   }
 // }
 
+// export async function useGetEntity(prevState: any, formData: FormData) {
+//   unstable_noStore();
+
+//   const searchText = formData.get("text")?.toString().trim();
+
+//   if (!searchText)
+//     return [
+//       {
+//         id: "",
+//         CF: "",
+//         PIVA: "",
+//         nome: "",
+//         cognome: "",
+//       },
+//     ];
+
+//   const data = await prisma.persona.findMany({
+//     where: {
+//       OR: [
+//         { nome: { contains: searchText, mode: "insensitive" } },
+//         { cognome: { contains: searchText, mode: "insensitive" } },
+//         { CF: { equals: searchText } },
+//         { PIVA: { equals: searchText } },
+//         {
+//           idTelefono: {
+//             some: {
+//               value: {
+//                 equals: searchText,
+//               },
+//             },
+//           },
+//         },
+//       ],
+//     },
+//     select: {
+//       id: true,
+//       nome: true,
+//       cognome: true,
+//       CF: true,
+//       PIVA: true,
+//       idTelefono: {
+//         select: {
+//           value: true,
+//         },
+//       },
+//     },
+//   });
+
+//   return data;
+// }
+
 export async function useGetEntity(prevState: any, formData: FormData) {
   unstable_noStore();
 
-  const searchText = formData.get("text")?.toString().trim();
+  const nomeCognome = formData.get("nomeCognome")?.toString().trim();
+  const telefono = formData.get("telefono")?.toString().trim();
+  const piva = formData.get("piva")?.toString().trim();
+  const cf = formData.get("cf")?.toString().trim();
 
-  if (!searchText)
+  if (!nomeCognome && !telefono && !piva && !cf) {
     return [
       {
         id: "",
@@ -69,25 +123,35 @@ export async function useGetEntity(prevState: any, formData: FormData) {
         cognome: "",
       },
     ];
+  }
 
-  const data = await prisma.persona.findMany({
-    where: {
+  let whereClause: any = {};
+
+  if (nomeCognome) {
+    whereClause = {
       OR: [
-        { nome: { contains: searchText, mode: "insensitive" } },
-        { cognome: { contains: searchText, mode: "insensitive" } },
-        { CF: { equals: searchText } },
-        { PIVA: { equals: searchText } },
-        {
-          idTelefono: {
-            some: {
-              value: {
-                equals: searchText,
-              },
-            },
+        { nome: { contains: nomeCognome, mode: "insensitive" } },
+        { cognome: { contains: nomeCognome, mode: "insensitive" } },
+      ],
+    };
+  } else if (telefono) {
+    whereClause = {
+      idTelefono: {
+        some: {
+          value: {
+            equals: telefono,
           },
         },
-      ],
-    },
+      },
+    };
+  } else if (piva) {
+    whereClause = { PIVA: { equals: piva } };
+  } else if (cf) {
+    whereClause = { CF: { equals: cf } };
+  }
+
+  const data = await prisma.persona.findMany({
+    where: whereClause,
     select: {
       id: true,
       nome: true,
