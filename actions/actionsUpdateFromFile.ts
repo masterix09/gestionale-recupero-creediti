@@ -129,18 +129,18 @@ export async function addDataToDatore(data: TData[]) {
             id: `${uuid_v4().toString()}-${cfPersona ?? "UNKNOW"}`,
             cap: cap?.toString() ?? "",
             CF: cfdatore?.toString() ?? "",
-            comune,
-            fine,
-            inizio,
+            comune: comune?.toString() ?? "",
+            fine: fine?.toString() ?? "",
+            inizio: inizio?.toString() ?? "",
             mese: mese?.toString() ?? "",
-            nome,
+            nome: nome?.toString() ?? "",
             PIVA: piva?.toString(),
-            provincia,
+            provincia: provincia?.toString() ?? "",
             ragione_sociale: ragioneSociale?.toString(),
             reddito: reddito?.toString() ?? "",
-            tipo,
+            tipo: tipo?.toString() ?? "",
             tipologia_contratto: partTime?.toString(),
-            via,
+            via: via?.toString() ?? "",
             personaID: cfPersona,
           });
         } else {
@@ -148,32 +148,24 @@ export async function addDataToDatore(data: TData[]) {
             where: { id: existingRecord.id },
             data: {
               cap: cap?.toString() ?? "",
-              comune,
-              fine,
-              inizio,
+              comune: comune?.toString() ?? "",
+              fine: fine.toString() ?? "",
+              inizio: inizio?.toString() ?? "",
               mese: mese?.toString() ?? "",
-              nome,
-              PIVA: piva?.toString(),
-              provincia,
+              nome: nome?.toString() ?? "",
+              PIVA: piva?.toString() ?? "",
+              provincia: provincia?.toString() ?? "",
               ragione_sociale: ragioneSociale?.toString(),
               reddito: reddito?.toString() ?? "",
-              tipo,
+              tipo: tipo?.toString() ?? "",
               tipologia_contratto: partTime?.toString(),
-              via,
+              via: via?.toString() ?? "",
               personaID: cfPersona,
             },
           });
         }
       }
     }
-
-    // console.log("recordsToCreate => ", recordsToCreate);
-    // console.log(
-    //   "recordsToUpdate => ",
-    //   recordsToUpdate.filter(
-    //     (item) => item.data.personaID === "MLTTZN69T50H501G"
-    //   )
-    // );
 
     const response = await fetch(
       "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/datore",
