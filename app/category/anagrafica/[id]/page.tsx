@@ -1,4 +1,4 @@
-import { availableToken, getAnagrafica } from "@/actions/fetchDatabase";
+import { checkTokenAndData, getAnagrafica } from "@/actions/fetchDatabase";
 import {
   Table,
   TableBody,
@@ -10,13 +10,28 @@ import {
 } from "@/components/ui/table";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import NoDataMessage from "@/components/common/NoDataMessage";
 
 export default async function Page({ params }: { params: { id: string } }) {
   const sessions = await auth();
   if (sessions && sessions.user) {
-    const token = await availableToken("anagrafica");
-    if (token && token === "NO") {
+    const tokenCheck = await checkTokenAndData("anagrafica", params.id);
+
+    // Se non ci sono token sufficienti, reindirizza
+    if (tokenCheck === "NO") {
       redirect("/");
+    }
+
+    // Se non ci sono dati, mostra messaggio informativo
+    if (tokenCheck === "NO_DATA") {
+      return (
+        <div className="w-[90%] md:w-[80%] mx-auto min-h-screen">
+          <h3 className="text-white uppercase font-bold text-2xl mb-5">
+            Tabella Anagrafica
+          </h3>
+          <NoDataMessage category="anagrafica" />
+        </div>
+      );
     }
     const data = await getAnagrafica(params.id);
     return (

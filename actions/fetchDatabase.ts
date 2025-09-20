@@ -110,6 +110,106 @@ export const availableToken = async (category: string) => {
   }
 };
 
+// Nuova funzione per controllare token e dati insieme
+export const checkTokenAndData = async (category: string, id: string) => {
+  const sessions = await auth();
+
+  if (sessions?.user.role === "admin") {
+    return "OK";
+  }
+
+  const token = await prisma.user.findFirst({
+    where: {
+      id: sessions?.user.id ?? "",
+    },
+    select: {
+      token: true,
+      id: true,
+    },
+  });
+
+  // Prima controlliamo se ci sono dati
+  let hasData = false;
+
+  if (category === "anagrafica") {
+    const data = await prisma.persona.findFirst({ where: { id } });
+    hasData = !!data;
+  } else if (category === "lavoro") {
+    const data = await prisma.datore.findMany({ where: { personaID: id } });
+    hasData = data.length > 0;
+  } else if (category === "telefono") {
+    const data = await prisma.telefono.findMany({ where: { personaID: id } });
+    hasData = data.length > 0;
+  } else if (category === "scp") {
+    const data = await prisma.cessionePignoramento.findFirst({
+      where: { personaID: id },
+    });
+    hasData = !!data;
+  } else if (category === "cc") {
+    const data = await prisma.contoCorrente.findFirst({ where: { CF: id } });
+    hasData = !!data;
+  } else if (category === "abicab") {
+    const data = await prisma.abiCab.findMany({
+      where: {
+        OR: [{ personaID: id }, { datoreID: id }],
+      },
+    });
+    hasData = data.length > 0;
+  }
+
+  // Se non ci sono dati, non decrementiamo i token
+  if (!hasData) {
+    return "NO_DATA";
+  }
+
+  // Se ci sono dati, controlliamo i token e decrementiamo solo se sufficienti
+  if (category === "anagrafica") {
+    if ((token?.token ?? 0) > AnagraficaPlafond) {
+      decreaseToken(token?.id ?? "", AnagraficaPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  if (category === "lavoro") {
+    if ((token?.token ?? 0) > LavororPlafond) {
+      decreaseToken(token?.id ?? "", LavororPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  if (category === "telefono") {
+    if ((token?.token ?? 0) > TelefonoPlafond) {
+      decreaseToken(token?.id ?? "", TelefonoPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  if (category === "scp") {
+    if ((token?.token ?? 0) > SCPPlafond) {
+      decreaseToken(token?.id ?? "", SCPPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  if (category === "cc") {
+    if ((token?.token ?? 0) > CCPlafond) {
+      decreaseToken(token?.id ?? "", CCPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  if (category === "abicab") {
+    if ((token?.token ?? 0) > AnagraficaPlafond) {
+      // ABI CAB usa lo stesso plafond di anagrafica
+      decreaseToken(token?.id ?? "", AnagraficaPlafond);
+      return "OK";
+    } else return "NO";
+  }
+
+  revalidatePath(`/category/${category}/[id]`, "page");
+  return "NO";
+};
+
 export const getAnagrafica = async (id: string) => {
   return await prisma.persona.findFirst({
     where: {
