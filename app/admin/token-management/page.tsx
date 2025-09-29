@@ -154,7 +154,9 @@ export default function TokenManagementPage() {
   return (
     <div className="container mx-auto p-6">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold">Gestione Token per Categoria</h1>
+        <h1 className="text-3xl font-bold text-white">
+          Gestione Token per Categoria
+        </h1>
         <p className="text-gray-600 mt-2">
           Configura il numero di token da scalare per ogni categoria di ricerca
         </p>
@@ -183,7 +185,9 @@ export default function TokenManagementPage() {
       ) : (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Configurazione Token</h2>
+            <h2 className="text-xl font-semibold text-white">
+              Configurazione Token
+            </h2>
             <div className="flex gap-2">
               <Button variant="outline" onClick={loadTokens} disabled={loading}>
                 <RefreshCw className="h-4 w-4 mr-2" />
