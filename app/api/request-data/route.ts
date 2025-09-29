@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,10 +31,9 @@ export async function POST(request: NextRequest) {
 
     const categoryName = categoryNames[category] || category;
 
-    // Invia email con Resend
-    const emailData = await resend.emails.send({
-      from: "noreply@osint.it",
-      to: ["info@osint.it"],
+    // Invia email con Gmail
+    const emailResult = await sendEmail({
+      to: "mariagioiaverde@gmail.com", // Cambia con la tua email
       subject: `Richiesta dati ${categoryName} - ${cf}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -68,8 +65,8 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    if (emailData.error) {
-      console.error("Errore invio email:", emailData.error);
+    if (!emailResult.success) {
+      console.error("Errore invio email:", emailResult.error);
       return NextResponse.json(
         { error: "Errore nell'invio della richiesta" },
         { status: 500 }
@@ -79,7 +76,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Richiesta inviata con successo",
-      emailId: emailData.data?.id,
+      emailId: emailResult.messageId,
     });
   } catch (error) {
     console.error("Errore nella richiesta dati:", error);
