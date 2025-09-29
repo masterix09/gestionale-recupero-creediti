@@ -36,6 +36,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return user;
         }
 
+        console.log("user =>", user);
+
         // return user object with the their profile data
         console.log("Autorizzazione completata"); // Log
         return user;
@@ -47,12 +49,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         // User is available during sign-in
         token.id = user.id;
+        token.role = (user as any).role;
       }
       return token;
     },
     session({ session, token }) {
       //@ts-ignore
       session.user.id = token.id;
+      //@ts-ignore
+      session.user.role = token.role;
       return session;
     },
     redirect() {

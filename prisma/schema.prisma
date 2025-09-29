@@ -96,3 +96,11 @@ model ContoCorrente {
   CF    String
   banca String
 }
+
+model CategoryToken {
+  id        String   @id @unique
+  category  String   @unique
+  tokens    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

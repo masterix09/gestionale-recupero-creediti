@@ -3,6 +3,7 @@ import { AiOutlineHome } from "@react-icons/all-files/ai/AiOutlineHome";
 import { RiMoneyEuroCircleLine } from "@react-icons/all-files/ri/RiMoneyEuroCircleLine";
 import { RiUserAddLine } from "@react-icons/all-files/ri/RiUserAddLine";
 import { FiUpload } from "@react-icons/all-files/fi/FiUpload";
+import { RiSettingsLine } from "@react-icons/all-files/ri/RiSettingsLine";
 import SidebarItem from "./SidebarItem";
 
 const Sidebar = () => {
@@ -42,6 +43,13 @@ const Sidebar = () => {
         }
         title="Modifica Utente"
         href="/admin/updateUser"
+      />
+      <SidebarItem
+        icon={
+          <RiSettingsLine className="w-6 h-6 text-red-800 group-hover:text-slate-300 transition-all" />
+        }
+        title="Gestione Token"
+        href="/admin/token-management"
       />
     </div>
   );
