@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
     // Invia email con Gmail
     const emailResult = await sendEmail({
-      to: "recuperoinfoitaliae@gmail.com", // Cambia con la tua email
+      to: "recuperoinfoitalia@gmail.com", // Cambia con la tua email
       subject: `Richiesta dati ${categoryName} - ${cf}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
