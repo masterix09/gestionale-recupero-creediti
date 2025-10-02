@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Controlla se l'utente è admin
-    const userRole = await getRoleFromId(session.user.id);
+    const userRole = await getRoleFromId(session.user.id || "");
 
     if (userRole?.role !== "admin") {
       return NextResponse.json({ error: "Accesso negato" }, { status: 403 });
@@ -50,7 +50,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Controlla se l'utente è admin
-    const userRole = await getRoleFromId(session.user.id);
+    const userRole = await getRoleFromId(session.user.id || "");
 
     if (userRole?.role !== "admin") {
       return NextResponse.json({ error: "Accesso negato" }, { status: 403 });
