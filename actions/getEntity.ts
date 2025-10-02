@@ -110,10 +110,9 @@ export async function useGetEntity(prevState: any, formData: FormData) {
 
   const nomeCognome = formData.get("nomeCognome")?.toString().trim();
   const telefono = formData.get("telefono")?.toString().trim();
-  const piva = formData.get("piva")?.toString().trim();
-  const cf = formData.get("cf")?.toString().trim();
+  const pivaCf = formData.get("pivaCf")?.toString().trim();
 
-  if (!nomeCognome && !telefono && !piva && !cf) {
+  if (!nomeCognome && !telefono && !pivaCf) {
     return [
       {
         id: "",
@@ -144,10 +143,10 @@ export async function useGetEntity(prevState: any, formData: FormData) {
         },
       },
     };
-  } else if (piva) {
-    whereClause = { PIVA: { equals: piva } };
-  } else if (cf) {
-    whereClause = { CF: { equals: cf } };
+  } else if (pivaCf) {
+    whereClause = {
+      OR: [{ PIVA: { equals: pivaCf } }, { CF: { equals: pivaCf } }],
+    };
   }
 
   const data = await prisma.persona.findMany({
