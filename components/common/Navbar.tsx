@@ -6,6 +6,7 @@ import { redirect, RedirectType } from "next/navigation";
 import { getRoleFromId } from "@/actions/getUserFromDB";
 import { RiMoneyEuroCircleFill } from "@react-icons/all-files/ri/RiMoneyEuroCircleFill";
 import { getTokenById } from "@/actions/fetchDatabase";
+import NotificationBell from "./NotificationBell";
 
 const Navbar = async () => {
   const sessions = await auth();
@@ -23,12 +24,15 @@ const Navbar = async () => {
         </Link>
         <div className="flex gap-x-3 justify-center items-center">
           {sessions && role?.role === "admin" && (
-            <Link
-              href="/admin"
-              className="bg-red-800 py-2 px-4 rounded-full text-white"
-            >
-              ADMNIN
-            </Link>
+            <>
+              <NotificationBell />
+              <Link
+                href="/admin"
+                className="bg-red-800 py-2 px-4 rounded-full text-white"
+              >
+                ADMNIN
+              </Link>
+            </>
           )}
           {sessions && (
             <form

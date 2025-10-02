@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import prisma from "@/lib/db";
+import { getRoleFromId } from "@/actions/getUserFromDB";
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,6 +32,22 @@ export async function POST(request: NextRequest) {
     };
 
     const categoryName = categoryNames[category] || category;
+
+    // Controlla se l'utente è admin
+    const userRole = await getRoleFromId(session.user.id || "");
+
+    // Se l'utente non è admin, crea una notifica per gli admin
+    if (userRole?.role !== "admin") {
+      await prisma.notification.create({
+        data: {
+          id: crypto.randomUUID(),
+          userId: session.user.id || "",
+          category: categoryName,
+          cf: cf,
+          message: `Richiesta dati ${categoryName} per CF: ${cf}`,
+        },
+      });
+    }
 
     // Invia email con Gmail
     const emailResult = await sendEmail({
