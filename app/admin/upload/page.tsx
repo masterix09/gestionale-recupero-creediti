@@ -99,6 +99,10 @@ export default function Page() {
           Comune: item[`Comune`] as string,
           //@ts-ignore
           Provincia: item[`Provincia`] as string,
+          //@ts-ignore
+          Email: item[`Email`] as string,
+          //@ts-ignore
+          Pec: item[`Pec`] as string,
         };
       });
 

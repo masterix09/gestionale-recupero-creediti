@@ -37,6 +37,8 @@ model Persona {
   idDatore               Datore[]
   idCessionePignoramento CessionePignoramento[]
   AbiCab                 AbiCab[]
+  email                  String?                @default("")
+  pec                    String?                @default("")
 }
 
 model Datore {

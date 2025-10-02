@@ -62,6 +62,8 @@ export type PersonaInput = {
   Cap: string; // CAP (o un elenco di CAP, separato da virgole)
   Comune: string; // Comune (o un elenco di comuni, separato da virgole)
   Provincia: string; // Provincia (o un elenco di province, separato da virgole)
+  Email: string; // Email
+  Pec: string; // Pec
 };
 
 export async function addDataToDatore(data: TData[]) {
