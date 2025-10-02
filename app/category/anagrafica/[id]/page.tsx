@@ -82,6 +82,12 @@ export default async function Page({ params }: { params: { id: string } }) {
               <TableHead className="text-white group-hover:text-black group-hover:font-bold">
                 CAP
               </TableHead>
+              <TableHead className="text-white group-hover:text-black group-hover:font-bold">
+                Email
+              </TableHead>
+              <TableHead className="text-white group-hover:text-black group-hover:font-bold">
+                Pec
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -111,6 +117,8 @@ export default async function Page({ params }: { params: { id: string } }) {
               <TableCell className="text-white">
                 {data?.cap.at(data.cap.length - 1)}
               </TableCell>
+              <TableCell className="text-white">{data?.email}</TableCell>
+              <TableCell className="text-white">{data?.pec}</TableCell>
             </TableRow>
           </TableBody>
         </Table>
