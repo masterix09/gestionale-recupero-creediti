@@ -100,9 +100,9 @@ export default function Page() {
           //@ts-ignore
           Provincia: item[`Provincia`] as string,
           //@ts-ignore
-          Email: item[`Email`] as string,
+          Email: item[`EMAIL`] as string,
           //@ts-ignore
-          Pec: item[`Pec`] as string,
+          Pec: item[`PEC`] as string,
         };
       });
 
