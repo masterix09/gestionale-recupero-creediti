@@ -31,10 +31,9 @@ const FormRicerca = () => {
     const form = e.currentTarget;
     const nomeCognome = form.nomeCognome.value.trim();
     const telefono = form.telefono.value.trim();
-    const piva = form.piva.value.trim();
-    const cf = form.cf.value.trim();
+    const pivaCf = form.pivaCf.value.trim();
 
-    const fieldsFilled = [nomeCognome, telefono, piva, cf].filter(
+    const fieldsFilled = [nomeCognome, telefono, pivaCf].filter(
       (val) => val !== ""
     );
 
@@ -71,16 +70,10 @@ const FormRicerca = () => {
             placeholder="Telefono"
           />
           <input
-            name="piva"
+            name="pivaCf"
             type="text"
             className="w-full px-3 border-2 border-black rounded-xl py-2"
-            placeholder="Partita IVA"
-          />
-          <input
-            name="cf"
-            type="text"
-            className="w-full px-3 border-2 border-black rounded-xl py-2"
-            placeholder="Codice Fiscale"
+            placeholder="Partita IVA o Codice Fiscale"
           />
           {error && (
             <p className="text-red-600 font-semibold text-center">{error}</p>

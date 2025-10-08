@@ -30,6 +30,46 @@ const decreaseToken = async (id: string, plafond: number) => {
   // console.log(res);
 };
 
+// Funzione per ottenere i token dinamici per categoria
+const getCategoryTokens = async (category: string): Promise<number> => {
+  try {
+    const categoryToken = await prisma.categoryToken.findUnique({
+      where: {
+        category: category,
+      },
+    });
+
+    if (categoryToken) {
+      return categoryToken.tokens;
+    }
+
+    // Fallback ai valori predefiniti se non trovati nel database
+    const fallbackTokens: { [key: string]: number } = {
+      anagrafica: AnagraficaPlafond,
+      lavoro: LavororPlafond,
+      telefono: TelefonoPlafond,
+      scp: SCPPlafond,
+      cc: CCPlafond,
+      abicab: AnagraficaPlafond, // ABI CAB usa lo stesso valore di anagrafica
+    };
+
+    return fallbackTokens[category] || AnagraficaPlafond;
+  } catch (error) {
+    console.error("Errore nel recupero dei token per categoria:", error);
+    // Fallback ai valori predefiniti in caso di errore
+    const fallbackTokens: { [key: string]: number } = {
+      anagrafica: AnagraficaPlafond,
+      lavoro: LavororPlafond,
+      telefono: TelefonoPlafond,
+      scp: SCPPlafond,
+      cc: CCPlafond,
+      abicab: AnagraficaPlafond,
+    };
+
+    return fallbackTokens[category] || AnagraficaPlafond;
+  }
+};
+
 export const addToken = async (data: { email: string; plafond: number }) => {
   try {
     const id = await prisma.user.findFirst({
@@ -72,38 +112,14 @@ export const availableToken = async (category: string) => {
       },
     });
 
-    if (category === "anagrafica") {
-      if ((token?.token ?? 0) > AnagraficaPlafond) {
-        decreaseToken(token?.id ?? "", AnagraficaPlafond);
-        return "OK";
-      } else return "NO";
-    }
+    // Ottieni i token dinamici per la categoria
+    const requiredTokens = await getCategoryTokens(category);
 
-    if (category === "lavoro") {
-      if ((token?.token ?? 0) > LavororPlafond) {
-        decreaseToken(token?.id ?? "", LavororPlafond);
-        return "OK";
-      } else return "NO";
-    }
-
-    if (category === "telefono") {
-      if ((token?.token ?? 0) > TelefonoPlafond) {
-        decreaseToken(token?.id ?? "", TelefonoPlafond);
-        return "OK";
-      } else return "NO";
-    }
-
-    if (category === "scp") {
-      if ((token?.token ?? 0) > SCPPlafond) {
-        decreaseToken(token?.id ?? "", SCPPlafond);
-        return "OK";
-      } else return "NO";
-    }
-    if (category === "cc") {
-      if ((token?.token ?? 0) > CCPlafond) {
-        decreaseToken(token?.id ?? "", CCPlafond);
-        return "OK";
-      } else return "NO";
+    if ((token?.token ?? 0) >= requiredTokens) {
+      decreaseToken(token?.id ?? "", requiredTokens);
+      return "OK";
+    } else {
+      return "NO";
     }
 
     revalidatePath(`/category/${category}/[id]`, "page");
@@ -163,51 +179,17 @@ export const checkTokenAndData = async (category: string, id: string) => {
   }
 
   // Se ci sono dati, controlliamo i token e decrementiamo solo se sufficienti
-  if (category === "anagrafica") {
-    if ((token?.token ?? 0) > AnagraficaPlafond) {
-      decreaseToken(token?.id ?? "", AnagraficaPlafond);
-      return "OK";
-    } else return "NO";
-  }
+  // Ottieni i token dinamici per la categoria
+  const requiredTokens = await getCategoryTokens(category);
 
-  if (category === "lavoro") {
-    if ((token?.token ?? 0) > LavororPlafond) {
-      decreaseToken(token?.id ?? "", LavororPlafond);
-      return "OK";
-    } else return "NO";
-  }
-
-  if (category === "telefono") {
-    if ((token?.token ?? 0) > TelefonoPlafond) {
-      decreaseToken(token?.id ?? "", TelefonoPlafond);
-      return "OK";
-    } else return "NO";
-  }
-
-  if (category === "scp") {
-    if ((token?.token ?? 0) > SCPPlafond) {
-      decreaseToken(token?.id ?? "", SCPPlafond);
-      return "OK";
-    } else return "NO";
-  }
-
-  if (category === "cc") {
-    if ((token?.token ?? 0) > CCPlafond) {
-      decreaseToken(token?.id ?? "", CCPlafond);
-      return "OK";
-    } else return "NO";
-  }
-
-  if (category === "abicab") {
-    if ((token?.token ?? 0) > AnagraficaPlafond) {
-      // ABI CAB usa lo stesso plafond di anagrafica
-      decreaseToken(token?.id ?? "", AnagraficaPlafond);
-      return "OK";
-    } else return "NO";
+  if ((token?.token ?? 0) >= requiredTokens) {
+    decreaseToken(token?.id ?? "", requiredTokens);
+    return "OK";
+  } else {
+    return "NO";
   }
 
   revalidatePath(`/category/${category}/[id]`, "page");
-  return "NO";
 };
 
 export const getAnagrafica = async (id: string) => {
