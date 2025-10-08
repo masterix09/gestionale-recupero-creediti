@@ -310,7 +310,8 @@ export async function importaPersone(personeInput: PersonaInput[]) {
     // return "OK";
 
     const response = await fetch(
-      "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/anagrafica",
+      // "https://worker-gestionale-recupero-crediti-ewt7.onrender.com/anagrafica",
+      "db1.ddns.net:1000/anagrafica",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
