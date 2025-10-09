@@ -29,6 +29,60 @@ export default function Page() {
   const [msg, setMsg] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
 
+  const [status, setStatus] = useState("");
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      setStatus("Seleziona un file CSV.");
+      return;
+    }
+
+    // Verifica dimensione file (opzionale, ma consigliato)
+    if (file.size > 1024 * 1024 * 1024) {
+      // 1GB limite Vercel
+      setStatus(
+        "Il file è troppo grande per l'upload diretto su Vercel. Contattare l'assistenza."
+      );
+      return;
+    }
+
+    setStatus("Caricamento in corso... Non chiudere la pagina.");
+
+    const formData = new FormData();
+    formData.append("csvFile", file);
+
+    try {
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+        // Next.js gestisce l'header Content-Type per formData
+      });
+
+      if (response.status === 202) {
+        setStatus(
+          "✅ Caricamento completato! Il file è ora in coda di elaborazione sul QNAP."
+        );
+      } else {
+        const data = await response.json();
+        setStatus(
+          `❌ Errore durante il caricamento: ${
+            data.error || response.statusText
+          }`
+        );
+      }
+    } catch (error) {
+      setStatus("❌ Errore di rete o del server.");
+      console.error(error);
+    }
+  };
+
   const MAX_XLSX_SIZE_MB = 5; // Limite massimo consigliato per file xlsx
 
   const isExcelFile = (file: { name: any }) => {
@@ -150,7 +204,7 @@ export default function Page() {
     formData.append("file", file);
 
     const xhr = new XMLHttpRequest();
-    
+
     xhr.open("POST", "https://db1.ddns.net:32813/upload");
     xhr.upload.onprogress = (ev) => {
       if (ev.lengthComputable)
@@ -662,7 +716,8 @@ export default function Page() {
             ref={fileRefAnagrafica}
             className="text-white"
           /> */}
-          <form onSubmit={handleUpload}>
+
+          {/* <form onSubmit={handleUpload}>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -673,7 +728,25 @@ export default function Page() {
             </button>
           </form>
           {progress !== null && <p>Progress: {progress}%</p>}
-          <p>{msg}</p>
+          <p>{msg}</p> */}
+
+          <h1>Carica File CSV (Max 1GB)</h1>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              required
+            />
+            <button
+              type="submit"
+              disabled={!file || status.includes("Caricamento in corso")}
+            >
+              Carica 1.000.000 Record
+            </button>
+          </form>
+          <p style={{ marginTop: 20, fontWeight: "bold" }}>Stato: {status}</p>
+          <small>L&apos;elaborazione avverrà in background sul NAS QNAP.</small>
         </div>
         <div>
           <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
