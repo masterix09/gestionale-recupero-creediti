@@ -150,7 +150,7 @@ export default function Page() {
     formData.append("file", file);
 
     const xhr = new XMLHttpRequest();
-    xhr.open("POST", "http://db1.ddns.net:9443/upload");
+    xhr.open("POST", "https://db1.ddns.net:9443/upload");
     xhr.upload.onprogress = (ev) => {
       if (ev.lengthComputable)
         setProgress(Math.round((ev.loaded / ev.total) * 100));
