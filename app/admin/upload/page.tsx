@@ -25,6 +25,10 @@ export default function Page() {
   const fileReCC = useRef<HTMLInputElement | null>(null);
   const fileRefABICAB = useRef<HTMLInputElement | null>(null);
 
+  const [file, setFile] = useState<File | null>(null);
+  const [msg, setMsg] = useState("");
+  const [progress, setProgress] = useState<number | null>(null);
+
   const MAX_XLSX_SIZE_MB = 5; // Limite massimo consigliato per file xlsx
 
   const isExcelFile = (file: { name: any }) => {
@@ -137,185 +141,29 @@ export default function Page() {
     setIspending(false);
   };
 
-  // @ts-ignore
-  // const handleFileAnagraficaLavoro = (e) => {
-  //   setIspending(true);
-  //   // console.log(e);
-  //   const file = e.target.files[0];
-  //   // console.log(file);
+  async function handleUpload(e: React.FormEvent) {
+    e.preventDefault();
+    if (!file) return;
+    setMsg("Caricamento in corso...");
 
-  //   if (!file) return;
+    const formData = new FormData();
+    formData.append("file", file);
 
-  //   if (isExcelFile(file) && file.size !== 0) {
-  //     const reader = new FileReader();
-  //     reader.readAsArrayBuffer(file);
-  //     reader.onload = async (e) => {
-  //       // @ts-ignore
-  //       const data1 = e.target.result;
-  //       const workbook = XLSX.read(data1, { type: "array", dense: true });
-  //       const sheetName = workbook.SheetNames[0];
-  //       const sheet = workbook.Sheets[sheetName];
-  //       const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-  //       console.log("parsedData => ", parsedData);
-  //       //@ts-ignore
-  //       setData(parsedData);
-  //       const totalColumn = Object.keys(parsedData.at(0)!).length;
-  //       const totalColumnDatore = totalColumn - 14;
-  //       const counterRowDatore = totalColumnDatore / 16;
-
-  //       const data = parsedData.map((item) => {
-  //         let arrDatore = [];
-
-  //         for (let index = 0; index < totalColumn; index++) {
-  //           if (index === 0) {
-  //             // @ts-ignore
-  //             if ((item[`CFDatoreDiLavoro`] as string) === "") {
-  //               index = 3;
-  //             } else {
-  //               arrDatore.push({
-  //                 // @ts-ignore
-  //                 cfPersona: item[`CF`] as string,
-  //                 // @ts-ignore
-  //                 cfdatore: item[`CFDatoreDiLavoro`] as string,
-  //                 // @ts-ignore
-  //                 tipo: item[`Tipo`] as string,
-  //                 // @ts-ignore
-  //                 reddito: item[`Reddito`] as string,
-  //                 // @ts-ignore
-  //                 mese: item[`MESE`] as string,
-  //                 // @ts-ignore
-  //                 partTime: item[`PART FULL TIME`] as string,
-  //                 // @ts-ignore
-  //                 inizio: item[`Inizio`] as string,
-  //                 // @ts-ignore
-  //                 fine: item[`Fine`] as string,
-  //                 // @ts-ignore
-  //                 piva: item[`P.IVA_1`] as string,
-  //                 // @ts-ignore
-  //                 ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
-  //                 // @ts-ignore
-  //                 nome: item[`Nome_1`] as string,
-  //                 // @ts-ignore
-  //                 via: item[`Via_1`] as string,
-  //                 // @ts-ignore
-  //                 cap: item[`Cap_1`] as string,
-  //                 // @ts-ignore
-  //                 comune: item[`Comune_1`] as string,
-  //                 // @ts-ignore
-  //                 provincia: item[`Provincia_1`] as string,
-  //               });
-  //             }
-  //           } else {
-  //             // @ts-ignore
-  //             if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
-  //               index = 3;
-  //             } else {
-  //               arrDatore.push({
-  //                 // @ts-ignore
-  //                 cfPersona: item[`CF`] as string,
-  //                 // @ts-ignore
-  //                 cfdatore: item[`CFDatoreDiLavoro_${index}`] as string,
-  //                 // @ts-ignore
-  //                 tipo: item[`Tipo_${index}`] as string,
-  //                 // @ts-ignore
-  //                 reddito: item[`Reddito_${index}`] as string,
-  //                 // @ts-ignore
-  //                 mese: item[`MESE_${index}`] as string,
-  //                 // @ts-ignore
-  //                 partTime: item[`PART FULL TIME_${index}`] as string,
-  //                 // @ts-ignore
-  //                 inizio: item[`Inizio_${index}`] as string,
-  //                 // @ts-ignore
-  //                 fine: item[`Fine_${index}`] as string,
-  //                 // @ts-ignore
-  //                 piva: item[`P.IVA_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 ragioneSociale: item[
-  //                   `CognomeRagioneSociale_${index + 1}`
-  //                 ] as string,
-  //                 // @ts-ignore
-  //                 nome: item[`Nome_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 via: item[`Via_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 cap: item[`Cap_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 comune: item[`Comune_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 provincia: item[`Provincia_${index + 1}`] as string,
-  //               });
-  //             }
-  //           }
-  //         }
-  //         return {
-  //           // @ts-ignore
-  //           CF: item[`CF`] as string,
-  //           // @ts-ignore
-  //           PIVA: item[`P.IVA`] as string,
-  //           // @ts-ignore
-  //           nome: item[`Nome`] as string,
-  //           // @ts-ignore
-  //           cognome: item[`CognomeRagioneSociale`] as string,
-  //           // @ts-ignore
-  //           sesso: item[`Sesso`] as string,
-  //           // @ts-ignore
-  //           comune_nascita: item[`ComuneNasc'a`] as string,
-  //           // @ts-ignore
-  //           provincia_nascita: item[`ProvNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_nascita: item[`DataNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_morte: item[`DataMorte`] as string,
-  //           // @ts-ignore
-  //           via: item[`Via`] as string,
-  //           // @ts-ignore
-  //           cap: item[`Cap`] as string,
-  //           // @ts-ignore
-  //           comune: item[`Comune`] as string,
-  //           // @ts-ignore
-  //           provincia: item[`Provincia`] as string,
-  //           datore: arrDatore,
-  //         };
-  //       });
-
-  //       console.log("Inizio elaborazione di ", data.length, " persone");
-
-  //       console.log(
-  //         "Numero di datori ",
-  //         data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
-  //       );
-
-  //       // Suddividi i record in blocchi da 25
-  //       const batchSize = 25;
-  //       let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
-
-  //       // Suddividi i dati in batch
-  //       for (let i = 0; i < data.length; i += batchSize) {
-  //         const batch = data.slice(i, i + batchSize);
-  //         const res = await addDataToDatore(batch);
-
-  //         if (res?.status === "ok") {
-  //           total.inseriti += res.inseriti;
-  //           total.aggiornati += res.aggiornati;
-  //           total.duplicati += res.duplicati;
-  //         } else {
-  //           toast({
-  //             variant: "destructive",
-  //             title: "Errore!",
-  //             description: "Errore durante l'importazione.",
-  //           });
-  //         }
-
-  //         toast({
-  //           title: "✅ Importazione completata",
-  //           description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
-  //         });
-  //       }
-  //     };
-  //   }
-
-  //   setIspending(false);
-  // };
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", "http://localhost:10000/upload");
+    xhr.upload.onprogress = (ev) => {
+      if (ev.lengthComputable)
+        setProgress(Math.round((ev.loaded / ev.total) * 100));
+    };
+    xhr.onload = () => {
+      setProgress(null);
+      if (xhr.status >= 200 && xhr.status < 300)
+        setMsg("Upload completato. Il NAS importerà i dati a breve.");
+      else setMsg("Errore upload: " + xhr.statusText);
+    };
+    xhr.onerror = () => setMsg("Errore di rete durante l'upload.");
+    xhr.send(formData);
+  }
 
   const handleFileAnagraficaLavoro = (
     e: React.ChangeEvent<HTMLInputElement>
@@ -524,190 +372,6 @@ export default function Page() {
       }
     };
   };
-
-  // const handleFileAnagraficaLavoro = (e) => {
-  //   setIspending(true);
-
-  //   const file = e.target.files[0];
-
-  //   if (!file) return;
-
-  //   if (isExcelFile(file) && file.size !== 0) {
-  //     const reader = new FileReader();
-  //     reader.readAsArrayBuffer(file);
-  //     reader.onloadend = async (e) => {
-  //       const data1 = e?.target?.result;
-  //       console.log("data1 => ", data1);
-  //       const workbook = XLSX.read(data1, { type: "binary" });
-  //       console.log("workbook => ", workbook);
-  //       const sheetName = workbook.SheetNames[0];
-  //       console.log("sheetName => ", sheetName);
-  //       const sheet = workbook.Sheets[sheetName];
-  //       console.log("sheet => ", sheet)
-  //       console.log("sheet => ", workbook.Sheets)
-  //       const parsedData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-  //       //@ts-ignore
-  //       // setData(parsedData);
-  //       console.log("parsedData => ", parsedData)
-  //       const totalColumn = Object.keys(parsedData.at(0)!).length;
-  //       const totalColumnDatore = totalColumn - 14;
-  //       const counterRowDatore = totalColumnDatore / 16;
-
-  //       const data = parsedData.map((item) => {
-  //         let arrDatore = [];
-
-  //         for (let index = 0; index < counterRowDatore; index++) {
-  //           if (index === 0) {
-  //             // @ts-ignore
-  //             if ((item[`CFDatoreDiLavoro`] as string) === "") {
-  //               index = 3;
-  //             } else {
-  //               arrDatore.push({
-  //                 // @ts-ignore
-  //                 cfPersona: item[`CF`] as string,
-  //                 // @ts-ignore
-  //                 cfdatore: item[`CFDatoreDiLavoro`] as string,
-  //                 // @ts-ignore
-  //                 tipo: item[`Tipo`] as string,
-  //                 // @ts-ignore
-  //                 reddito: item[`Reddito`] as string,
-  //                 // @ts-ignore
-  //                 mese: item[`MESE`] as string,
-  //                 // @ts-ignore
-  //                 partTime: item[`PART FULL TIME`] as string,
-  //                 // @ts-ignore
-  //                 inizio: item[`Inizio`] as string,
-  //                 // @ts-ignore
-  //                 fine: item[`Fine`] as string,
-  //                 // @ts-ignore
-  //                 piva: item[`P.IVA_1`] as string,
-  //                 // @ts-ignore
-  //                 ragioneSociale: item[`CognomeRagioneSociale_1`] as string,
-  //                 // @ts-ignore
-  //                 nome: item[`Nome_1`] as string,
-  //                 // @ts-ignore
-  //                 via: item[`Via_1`] as string,
-  //                 // @ts-ignore
-  //                 cap: item[`Cap_1`] as string,
-  //                 // @ts-ignore
-  //                 comune: item[`Comune_1`] as string,
-  //                 // @ts-ignore
-  //                 provincia: item[`Provincia_1`] as string,
-  //               });
-  //             }
-  //           } else {
-  //             // @ts-ignore
-  //             if ((item[`CFDatoreDiLavoro_${index}`] as string) === "") {
-  //               index = 3;
-  //             } else {
-  //               arrDatore.push({
-  //                 // @ts-ignore
-  //                 cfPersona: item[`CF`] as string,
-  //                 // @ts-ignore
-  //                 cfdatore: item[`CFDatoreDiLavoro_${index}`] as string,
-  //                 // @ts-ignore
-  //                 tipo: item[`Tipo_${index}`] as string,
-  //                 // @ts-ignore
-  //                 reddito: item[`Reddito_${index}`] as string,
-  //                 // @ts-ignore
-  //                 mese: item[`MESE_${index}`] as string,
-  //                 // @ts-ignore
-  //                 partTime: item[`PART FULL TIME_${index}`] as string,
-  //                 // @ts-ignore
-  //                 inizio: item[`Inizio_${index}`] as string,
-  //                 // @ts-ignore
-  //                 fine: item[`Fine_${index}`] as string,
-  //                 // @ts-ignore
-  //                 piva: item[`P.IVA_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 ragioneSociale: item[
-  //                   `CognomeRagioneSociale_${index + 1}`
-  //                 ] as string,
-  //                 // @ts-ignore
-  //                 nome: item[`Nome_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 via: item[`Via_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 cap: item[`Cap_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 comune: item[`Comune_${index + 1}`] as string,
-  //                 // @ts-ignore
-  //                 provincia: item[`Provincia_${index + 1}`] as string,
-  //               });
-  //             }
-  //           }
-  //         }
-  //         return {
-  //           // @ts-ignore
-  //           CF: item[`CF`] as string,
-  //           // @ts-ignore
-  //           PIVA: item[`P.IVA`] as string,
-  //           // @ts-ignore
-  //           nome: item[`Nome`] as string,
-  //           // @ts-ignore
-  //           cognome: item[`CognomeRagioneSociale`] as string,
-  //           // @ts-ignore
-  //           sesso: item[`Sesso`] as string,
-  //           // @ts-ignore
-  //           comune_nascita: item[`ComuneNasc'a`] as string,
-  //           // @ts-ignore
-  //           provincia_nascita: item[`ProvNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_nascita: item[`DataNasc'a`] as string,
-  //           // @ts-ignore
-  //           data_morte: item[`DataMorte`] as string,
-  //           // @ts-ignore
-  //           via: item[`Via`] as string,
-  //           // @ts-ignore
-  //           cap: item[`Cap`] as string,
-  //           // @ts-ignore
-  //           comune: item[`Comune`] as string,
-  //           // @ts-ignore
-  //           provincia: item[`Provincia`] as string,
-  //           datore: arrDatore,
-  //         };
-  //       });
-
-  //       console.log("Inizio elaborazione di ", data.length, " persone");
-
-  //       console.log(
-  //         "Numero di datori ",
-  //         data.filter((item) => item.datore.at(0)?.cfdatore.length! > 0).length
-  //       );
-
-  //       // Suddividi i record in blocchi da 25
-  //       const batchSize = 25;
-  //       let total = { inseriti: 0, aggiornati: 0, duplicati: 0 };
-
-  //       // Suddividi i dati in batch
-  //       for (let i = 0; i < data.length; i += batchSize) {
-  //         const batch = data.slice(i, i + batchSize);
-  //         console.log("i => ", i)
-  //         const res = await addDataToDatore(batch);
-
-  //         if (res?.status === "ok") {
-  //           total.inseriti += res.inseriti;
-  //           total.aggiornati += res.aggiornati;
-  //           total.duplicati += res.duplicati;
-  //         } else {
-  //           toast({
-  //             variant: "destructive",
-  //             title: "Errore!",
-  //             description: "Errore durante l'importazione.",
-  //           });
-  //         }
-
-  //         toast({
-  //           title: "✅ Importazione completata",
-  //           description: `Inseriti: ${total.inseriti}, Aggiornati: ${total.aggiornati}, Duplicati: ${total.duplicati}`,
-  //         });
-  //       }
-
-  //     };
-  //   }
-
-  //   setIspending(false);
-  // };
 
   // Funzione per trasformare i dati
   const transformArray = (array: { CF: string; [key: string]: string }[]) => {
@@ -988,7 +652,7 @@ export default function Page() {
           <h3 className="text-white text-xl font-semibold">
             Upload Anagrafica
           </h3>
-          <input
+          {/* <input
             type="file"
             name="fileAnagrafica"
             id="fileAnagrafica"
@@ -996,7 +660,19 @@ export default function Page() {
             onChange={handleFilePersona}
             ref={fileRefAnagrafica}
             className="text-white"
-          />
+          /> */}
+          <form onSubmit={handleUpload}>
+            <input
+              type="file"
+              accept=".csv,text/csv"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+            />
+            <button type="submit" disabled={!file}>
+              Carica
+            </button>
+          </form>
+          {progress !== null && <p>Progress: {progress}%</p>}
+          <p>{msg}</p>
         </div>
         <div>
           <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
