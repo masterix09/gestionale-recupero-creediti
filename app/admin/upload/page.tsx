@@ -28,60 +28,129 @@ export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [msg, setMsg] = useState("");
   const [progress, setProgress] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [status, setStatus] = useState({
+    message: "",
+    type: ""
+  });
 
-  const [status, setStatus] = useState("");
-
+  // Gestione della selezione del file
+  //@ts-ignore
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+    const selectedFile = e.target.files?.[0];
+    if (selectedFile && selectedFile.name.endsWith('.csv')) {
+        setFile(selectedFile);
+        setStatus({ message: `File pronto: ${selectedFile.name} (${(selectedFile.size / 1024 / 1024).toFixed(2)} MB)`, type: 'info' });
+    } else {
+        setFile(null);
+        setStatus({ message: 'Seleziona un file CSV valido.', type: 'error' });
     }
-  };
+    setProgress(0);
+};
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+// Funzione principale di upload
+const handleUpload = async () => {
     if (!file) {
-      setStatus("Seleziona un file CSV.");
-      return;
+        setStatus({ message: 'Seleziona un file prima di avviare il caricamento.', type: 'error' });
+        return;
     }
 
-    // Verifica dimensione file (opzionale, ma consigliato)
-    if (file.size > 1024 * 1024 * 1024) {
-      // 1GB limite Vercel
-      setStatus(
-        "Il file è troppo grande per l'upload diretto su Vercel. Contattare l'assistenza."
-      );
-      return;
-    }
-
-    setStatus("Caricamento in corso... Non chiudere la pagina.");
-
-    const formData = new FormData();
-    formData.append("csvFile", file);
+    setUploading(true);
+    setProgress(0);
+    setStatus({ message: 'Passaggio 1/2: Richiesta URL firmata...', type: 'info' });
 
     try {
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-        // Next.js gestisce l'header Content-Type per formData
-      });
+        // 1. CHIAMATA AL BACKEND: Ottieni l'URL firmata
+        const response = await fetch('/api/upload-url', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fileName: file.name,
+                contentType: file.type || 'text/csv',
+            }),
+        });
 
-      if (response.status === 202) {
-        setStatus(
-          "✅ Caricamento completato! Il file è ora in coda di elaborazione sul QNAP."
-        );
-      } else {
-        const data = await response.json();
-        setStatus(
-          `❌ Errore durante il caricamento: ${
-            data.error || response.statusText
-          }`
-        );
-      }
+        if (!response.ok) {
+            throw new Error('Impossibile ottenere l\'URL firmata.');
+        }
+
+        const { signedUrl, fileKey } = await response.json();
+
+        setStatus({ message: `Passaggio 2/2: Caricamento diretto su R2 in corso... (${fileKey})`, type: 'info' });
+
+        // 2. UPLOAD DIRETTO SU R2 TRAMITE URL FIRMATA (PUT)
+        await uploadFileWithProgress(signedUrl, file, setProgress);
+
+        setStatus({ 
+            message: `Caricamento completato con successo! Il Job Processor sta elaborando il file in ${fileKey}.`, 
+            type: 'success' 
+        });
+        setFile(null); // Pulisce il file selezionato
+        
     } catch (error) {
-      setStatus("❌ Errore di rete o del server.");
-      console.error(error);
+        console.error('Errore di Upload:', error);
+
+        let errorMessage = 'Caricamento fallito. Controlla la console.';
+        if (error instanceof Error && error.message) {
+            errorMessage = `Caricamento fallito. ${error.message}. Controlla la console.`;
+        }
+
+        setStatus({ 
+            message: errorMessage, 
+            type: 'error' 
+        });
+    } finally {
+        setUploading(false);
     }
-  };
+};
+
+// Helper per l'upload con tracciamento del progresso (usando XHR)
+//@ts-ignore
+const uploadFileWithProgress = (url: string, file: File, setProgressCallback: (percent: number) => void) => {
+    return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+
+        // Importante per R2/S3
+        xhr.setRequestHeader('Content-Type', file.type || 'text/csv');
+        
+        // Tracciamento del progresso
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percent = (event.loaded / event.total) * 100;
+                setProgressCallback(percent);
+            }
+        };
+
+        // Gestione del completamento o errore
+        xhr.onload = () => {
+            // S3/R2 risponde con 200 OK
+            if (xhr.status >= 200 && xhr.status < 300) {
+                setProgressCallback(100);
+                //@ts-ignore
+                resolve();
+            } else {
+                reject(new Error(`Errore HTTP ${xhr.status} durante l'upload diretto su R2.`));
+            }
+        };
+
+        xhr.onerror = () => {
+            reject(new Error('Errore di rete o di connessione durante l\'upload.'));
+        };
+
+        // Avvia l'invio del file
+        xhr.send(file);
+    });
+};
+
+// Stili dinamici per lo status
+//@ts-ignore
+const getStatusClasses = (type: string) => {
+    if (type === 'success') return 'bg-green-100 text-green-800';
+    if (type === 'error') return 'bg-red-100 text-red-800';
+    return 'bg-blue-100 text-blue-800';
+};
+
 
   const MAX_XLSX_SIZE_MB = 5; // Limite massimo consigliato per file xlsx
 
@@ -195,7 +264,7 @@ export default function Page() {
     setIspending(false);
   };
 
-  async function handleUpload(e: React.FormEvent) {
+  async function handleUpload2(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
     setMsg("Caricamento in corso...");
@@ -717,7 +786,7 @@ export default function Page() {
             className="text-white"
           /> */}
 
-          {/* <form onSubmit={handleUpload}>
+          {/* <form onSubmit={handleUpload2}>
             <input
               type="file"
               accept=".csv,text/csv"
@@ -730,7 +799,7 @@ export default function Page() {
           {progress !== null && <p>Progress: {progress}%</p>}
           <p>{msg}</p> */}
 
-          <h1>Carica File CSV (Max 1GB)</h1>
+          {/* <h1>Carica File CSV (Max 1GB)</h1>
           <form onSubmit={handleSubmit}>
             <input
               type="file"
@@ -746,7 +815,57 @@ export default function Page() {
             </button>
           </form>
           <p style={{ marginTop: 20, fontWeight: "bold" }}>Stato: {status}</p>
-          <small>L&apos;elaborazione avverrà in background sul NAS QNAP.</small>
+          <small>L&apos;elaborazione avverrà in background sul NAS QNAP.</small> */}
+
+          {/* File Input Area */}
+          <div className="space-y-4">
+                    <input 
+                        type="file" 
+                        id="csvFile" 
+                        accept=".csv" 
+                        className="hidden" 
+                        onChange={handleFileChange} 
+                        disabled={uploading}
+                    />
+                    
+                    <label 
+                        htmlFor="csvFile" 
+                        className={`flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer transition duration-150 
+                            ${uploading ? 'bg-gray-200 border-gray-400' : 'bg-indigo-50 border-indigo-300 hover:bg-indigo-100'}`}
+                    >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 mb-2 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            <p className="mb-2 text-sm text-indigo-500"><span className="font-semibold">Clicca per selezionare</span></p>
+                            <p className="text-xs text-gray-500">{file ? `Selezionato: ${file.name}` : 'Nessun file selezionato'}</p>
+                        </div>
+                    </label>
+                    
+                    <button 
+                        id="uploadButton" 
+                        onClick={handleUpload} 
+                        className="w-full px-5 py-3 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-300 transition duration-150 shadow-md disabled:bg-indigo-400"
+                        disabled={!file || uploading}>
+                        {uploading ? 'Caricamento in corso...' : 'Avvia Caricamento Massivo'}
+                    </button>
+                </div>
+
+                {/* Status and Progress Area */}
+                <div id="statusContainer" className="mt-6 space-y-3">
+                    <div id="uploadStatus" className={`p-3 rounded-lg text-sm font-medium ${getStatusClasses(status.type)}`}>
+                        {status.message}
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-2.5">
+                        <div id="progressBar" 
+                             className="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" 
+                             style={{ width: `${progress}%` }}>
+                        </div>
+                    </div>
+                    <p id="progressText" className="text-xs text-gray-500 text-right">{Math.round(progress ?? 0)}%</p>
+                </div>
         </div>
         <div>
           <h3 className="text-white text-xl font-semibold">Upload Lavoro</h3>
