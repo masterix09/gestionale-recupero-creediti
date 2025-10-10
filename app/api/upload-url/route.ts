@@ -4,9 +4,9 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 // Configurazione R2 (le credenziali devono essere in .env.local)
 const R2_CONFIG = {
     R2_ENDPOINT: process.env.R2_ENDPOINT,
-    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID,
-    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY,
-    R2_BUCKET_NAME: process.env.R2_BUCKET_NAME,
+    R2_ACCESS_KEY_ID: process.env.R2_ACCESS_KEY_ID_VERCEL,
+    R2_SECRET_ACCESS_KEY: process.env.R2_SECRET_ACCESS_KEY_VERCEL,
+    R2_BUCKET_NAME: process.env.R2_BUCKET_BUCKET_NAME,
 };
 
 // Configura il client S3 (compatibile con R2)
